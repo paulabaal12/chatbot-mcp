@@ -17,4 +17,15 @@ function logInteraction(role, content) {
   fs.appendFileSync(LOG_FILE, logLine, 'utf8');
 }
 
-module.exports = { logInteraction };
+function showLog() {
+  if (fs.existsSync(LOG_FILE)) {
+    const data = fs.readFileSync(LOG_FILE, 'utf8');
+    console.log('\n--- Historial de la conversación ---');
+    console.log(data);
+    console.log('--- Fin del historial ---\n');
+  } else {
+    console.log('No hay historial de conversación.');
+  }
+}
+
+module.exports = { logInteraction, showLog };

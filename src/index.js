@@ -1,7 +1,35 @@
-// Eliminar repositorio: "elimina el repositorio pollito" o "borra repositorio pollito"
+// =======================
+// IMPORTS Y CONFIGURACIÓN GLOBAL
+// =======================
+import readline from 'readline';
+import { sendMessageToClaude } from './claude.js';
+import { logInteraction, showLog } from './log.js';
+import { crearRepositorio, crearRepositorioRemoto } from './mcp_oficiales.js';
+
+const BASE_DIR = 'D:/Documentos/GitHub';
+const messages = [];
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+// =======================
+// REGEX FLEXIBLES (PARSING)
+// =======================
 const flexibleDeleteRepo = /(?:elimina|borra|quita).*repositorio\s+([\w-]+)/i;
-// Modificar README: "modifica el README de pollito con texto Z"
 const flexibleEditReadme = /modifica.*readme.*(?:de|en)?\s*([\w-]+).*con\s+texto\s+(.+)/i;
+const flexibleEditFile = /(?:modifica|edita|cambia).*archivo.*(?:en\s+)?([A-Za-z]:[\\/][^\s]+).*con\s+texto\s+(.+)/i;
+const flexibleDeleteFile = /(?:elimina|borra|quita).*archivo.*(?:en\s+)?([A-Za-z]:[\\/][^\s]+)/i;
+const flexibleCreateFile = /(?:crea(?:r)?|agrega|genera|haz).*archivo\s+([\w.-]+).*en\s+([A-Za-z]:[\\/][^\s]+)(?:.*con\s+texto\s+(.+))?/i;
+const flexibleCommit = /(?:commit|commitea|haz.*commit|puedes.*commit).*?(?:en|a)?(?: mi)? repositorio\s+([\w-]+).*?(?:con\s+(?:mensaje|nombre)\s+(.+))?/i;
+const naturalCreateFull = /(?:crear|creame|haz|puedes crear|quiero crear|sube|publica).*repositorio\s+([\w-]+)(?:\s+con\s+readme\s+(.+?))?(?:\s+commit\s+(.+?))?(?:\s+en\s+github)?$/i;
+const repoCustomRegex = /crea(?:me)?(?:r)?(?: un)? repositorio\s+([\w-]+)(?:\s+con\s+readme\s+(.+?))?(?:\s+commit\s+(.+))?$/i;
+const publishRegex = /publica repo ([\w-]+) como ([\w-]+)/i;
+
+// =======================
+// FUNCIÓN PRINCIPAL DE PARSING Y FLUJO
+// =======================
 
 // Handler para eliminar repositorio local y remoto (GitHub)
 async function eliminarRepositorioPorNombre(nombreRepo) {
@@ -81,11 +109,6 @@ async function modificarReadmePorRepo(nombreRepo, texto) {
     throw new Error('Error al modificar README: ' + (err && err.message ? err.message : err));
   }
 }
-// --- Regex flexibles para modificar y eliminar archivos ---
-// Modificar archivo: "modifica el archivo X en la ruta Y con texto Z" o "edita archivo Y con texto Z"
-const flexibleEditFile = /(?:modifica|edita|cambia).*archivo.*(?:en\s+)?([A-Za-z]:[\\/][^\s]+).*con\s+texto\s+(.+)/i;
-// Eliminar archivo: "elimina el archivo X en la ruta Y" o "borra archivo Y"
-const flexibleDeleteFile = /(?:elimina|borra|quita).*archivo.*(?:en\s+)?([A-Za-z]:[\\/][^\s]+)/i;
 
 // Handler para modificar archivo usando MCP Filesystem
 async function modificarArchivoRutaAbsoluta(rutaDestino, texto) {
@@ -124,11 +147,6 @@ async function eliminarArchivoRutaAbsoluta(rutaDestino) {
   }
 }
 
-// --- Detección flexible para crear archivos en cualquier orden y con texto opcional ---
-// Ejemplo: "crea un archivo prueba.txt en D:/Documentos/GitHub/pollito/prueba.txt con texto hola mundo"
-// O: "en D:/Documentos/GitHub/pollito/prueba.txt crea archivo prueba.txt"
-const flexibleCreateFile = /(?:crea(?:r)?|agrega|genera|haz).*archivo\s+([\w.-]+).*en\s+([A-Za-z]:[\\/][^\s]+)(?:.*con\s+texto\s+(.+))?/i;
-
 async function crearArchivoRutaAbsoluta(nombreArchivo, rutaDestino) {
   // Usa MCP Filesystem server para crear el archivo en la ruta absoluta
   const { MCPStdioClient } = await import('./mcp_clients.js');
@@ -154,31 +172,22 @@ async function crearArchivoRutaAbsoluta(nombreArchivo, rutaDestino) {
     throw new Error('Error al crear archivo: ' + (err && err.message ? err.message : err));
   }
 }
-// Punto de entrada del chatbot anfitrión
-
-import readline from 'readline';
-import { sendMessageToClaude } from './claude.js';
-import { logInteraction, showLog } from './log.js';
-import { crearRepositorio, crearRepositorioRemoto } from './mcp_oficiales.js';
-
-// Historial de mensajes para mantener contexto
-const messages = [];
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
 
 console.log('Chatbot anfitrión iniciado. Escribe tu mensaje (Ctrl+C para salir):');
-console.log('\nComandos especiales disponibles:');
+console.log('\nEjemplos de comandos disponibles:');
 console.log('  - creame un repositorio NOMBRE con readme TEXTO commit MENSAJE');
-console.log('  - publica repo NOMBRE como USUARIOGITHUB');
+console.log('  - haz un commit a mi repositorio NOMBRE con mensaje MENSAJE');
+console.log('  - crea un archivo archivo.txt en D:/Documentos/GitHub/miRepo/archivo.txt con texto Hola mundo');
+console.log('  - modifica el archivo D:/Documentos/GitHub/miRepo/archivo.txt con texto Nuevo contenido');
+console.log('  - elimina el archivo D:/Documentos/GitHub/miRepo/archivo.txt');
+console.log('  - modifica el README de miRepo con texto Este es el nuevo README');
+console.log('  - elimina el repositorio miRepo');
 console.log('  - historial   (muestra el historial de mensajes)');
 console.log('');
 
-
-
+// =======================
+// FUNCIÓN PRINCIPAL DE PARSING Y FLUJO
+// =======================
 async function handleInput(input) {
   // --- Eliminar repositorio completo por nombre ---
   const matchDeleteRepo = input.match(flexibleDeleteRepo);

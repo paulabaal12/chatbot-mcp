@@ -19,7 +19,17 @@ async function eliminarRepositorioPorNombre(nombreRepo) {
     fsClient.close();
     // Verificar si la carpeta realmente se borró
     if (fs.existsSync(repoPath)) {
-      localMsg = `La carpeta local '${repoPath}' NO se pudo borrar completamente.\nSugerencia: Cierra VS Code o cualquier programa que use archivos de ese repo y vuelve a intentarlo.`;
+      const { execSync } = await import('child_process');
+      try {
+        execSync(`Remove-Item -Path '${repoPath}' -Recurse -Force`, { shell: 'powershell.exe' });
+      } catch (psErr) {
+        // ignorar, reportar después
+      }
+      if (fs.existsSync(repoPath)) {
+        localMsg = `La carpeta local '${repoPath}' NO se pudo borrar completamente.\nIncluso forzando con PowerShell. Sugerencia: Reinicia tu PC o elimina manualmente.`;
+      } else {
+        localMsg = `Repositorio local '${nombreRepo}' eliminado (carpeta borrada, forzado con PowerShell).`;
+      }
     } else {
       localMsg = `Repositorio local '${nombreRepo}' eliminado (carpeta borrada).`;
     }

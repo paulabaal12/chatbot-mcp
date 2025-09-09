@@ -1,7 +1,3 @@
-# chatbot-mcp
-
-node scripts/generate_tools_json.js
-
 # mcp-remote
 
 A simple MCP (Model Context Protocol) server running on Cloudflare Workers.
@@ -23,12 +19,22 @@ wrangler init mcp-remote-server
 wrangler deploy
 ```
 
+Example deployment output:
+```
+Total Upload: 2.78 KiB / gzip: 0.97 KiB
+Uploaded mcp-remote (3.06 sec)
+Deployed mcp-remote triggers (0.56 sec)
+  https://mcp-remote.paulabarillas.workers.dev
+Current Version ID: c65a1eef-c533-4d4f-9011-5cdeb946194f
+```
+
 ## 📦 Project Overview
 
 This is a minimal MCP server that responds to POST requests with a JSON body. It is designed to be used remotely by chatbots or other clients.
 
 ### Supported Methods
 
+- `tools/list`: Returns a list of available tools.
 - `get_time`: Returns the current time in UTC or a specified timezone.
 - `lucky_number`: Returns a random lucky number between 1 and 100.
 - `fun_fact`: Returns a random fun fact.

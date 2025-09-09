@@ -58,175 +58,52 @@ async function main() {
       return;
     }
 
-    // FLUJO: detección de intención por tools
-    const lowerInput = input.toLowerCase();
-    const fsClient = clients.find(c => c.proc.spawnargs.some(a => String(a).includes("@modelcontextprotocol/server-filesystem")));
-    const gitClient = clients.find(c => c.proc.spawnargs.some(a => String(a).includes("@cyanheads/git-mcp-server")));
-
-    // Buscar tool más relevante
-    let toolMatch = null;
-    let toolArgs = {};
-    for (const tool of allTools) {
-      // Coincidencia por nombre o descripción
-      if (lowerInput.includes(tool.name) || (tool.description && lowerInput.includes(tool.description.split(" ")[0]))) {
-        toolMatch = tool;
-        break;
-      }
-      // Coincidencia por argumentos y valores típicos
-      if (tool.input_schema && tool.input_schema.properties) {
-        for (const arg in tool.input_schema.properties) {
-          // Si el input menciona el argumento o un valor típico
-          if (lowerInput.includes(arg)) {
-            toolMatch = tool;
-            break;
+    // FLUJO: Claude actúa como dispatcher de tools
+    // Se le pasa la lista de tools y el input, y debe responder con el nombre de la tool y los argumentos
+  const dispatcherPrompt = `Eres un asistente que solo puede responder usando las siguientes tools JSON. Dado el mensaje del usuario, responde únicamente con un JSON de la forma {\n  \"tool\": <nombre_tool>,\n  \"args\": { ...argumentos... }\n}\nNo expliques nada, solo responde el JSON.\nIMPORTANTE: \n- Si el usuario pide crear un archivo, debes usar la tool 'write_file' y pasar correctamente los argumentos 'path' (ruta completa del archivo) y 'content' (contenido, puede ser vacío si el usuario no lo especifica).\n- Si la tool requiere un argumento 'owner' y el usuario no lo especifica, usa siempre 'paulabaal12' como valor por defecto.\nLista de tools disponibles:\n${JSON.stringify(allTools, null, 2)}\n\nMensaje del usuario:\n${input}`;
+    let dispatcherResponse;
+    try {
+      dispatcherResponse = await claude.sendMessage(dispatcherPrompt, history);
+      // Buscar JSON en la respuesta
+      const jsonMatch = dispatcherResponse.content[0]?.text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const toolCall = JSON.parse(jsonMatch[0]);
+        const toolMatch = allTools.find(t => t.name === toolCall.tool);
+        if (toolMatch) {
+          const mcpName = toolMatch.mcp;
+          const mcpIndex = servers.findIndex(cfg => (cfg.name || '').toLowerCase() === (mcpName || '').toLowerCase());
+          const mcpClient = mcpIndex !== -1 ? clients[mcpIndex] : undefined;
+          if (mcpClient) {
+            try {
+              console.log(`[Chatbot]: Ejecutando tool ${toolCall.tool} en ${mcpName}...`);
+              const result = await mcpClient.callTool(toolCall.tool, toolCall.args || {});
+              logInteraction('assistant', `[${mcpName}]:\n${JSON.stringify(result, null, 2)}`);
+              // Pasa el resultado a Claude para interpretación
+              const prompt = `Interpreta esta respuesta de un MCP para el usuario\n${JSON.stringify(result)}`;
+              const response = await claude.sendMessage(prompt, history);
+              history.push({ role: "user", content: input });
+              history.push({ role: "assistant", content: response.content });
+              logInteraction('user', input);
+              logInteraction('assistant', response.content[0]?.text || "(sin respuesta)");
+              console.log("[Claude]:", response.content[0]?.text || "(sin respuesta)");
+            } catch (err) {
+              const msg = `Error al invocar tool MCP: ${err}`;
+              console.log(msg);
+              logInteraction('assistant', msg);
+            }
+            rl.prompt();
+            return;
+          } else {
+            const msg = `[Chatbot]: No existe un tool MCP para esta acción.`;
+            console.log(msg);
+            logInteraction('assistant', msg);
+            rl.prompt();
+            return;
           }
         }
       }
-      if (toolMatch) break;
-    }
-    
-    // Ejemplo: crear repo (GitHub + clonar)
-    if (toolMatch && toolMatch.name === "create_repository") {
-      // Extraer nombre del repo del input
-      const repoName = lowerInput.split("repositorio").pop().replace(/[^\w-]/g, "").trim();
-      if (!repoName) {
-        const msg = `❌ No se pudo detectar el nombre del repositorio.`;
-        console.log(`[Chatbot]: ${msg}`);
-        logInteraction('assistant', msg);
-        rl.prompt();
-        return;
-      }
-      const githubToken = process.env.GITHUB_TOKEN;
-      if (!githubToken) {
-        const msg = `❌ No se encontró el token de GitHub en .env (GITHUB_TOKEN).`;
-        console.log(`[Chatbot]: ${msg}`);
-        logInteraction('assistant', msg);
-        rl.prompt();
-        return;
-      }
-      const cloneDir = `D:/Documentos/GitHub/${repoName}`;
-      try {
-        const repo = await createGithubRepo(repoName, githubToken);
-        const cloneUrl = repo.clone_url;
-        await new Promise((resolve, reject) => {
-          exec(`git clone ${cloneUrl} "${cloneDir}"`, (err, stdout, stderr) => {
-            if (err) return reject(stderr || err);
-            resolve(stdout);
-          });
-        });
-        const msg = `✅ Repositorio creado en GitHub y clonado en ${cloneDir}`;
-        console.log(`[Chatbot]: ${msg}`);
-        logInteraction('assistant', msg);
-      } catch (err) {
-        const msg = `❌ Error al crear/clonar el repositorio: ${err}`;
-        console.log(`[Chatbot]: ${msg}`);
-        logInteraction('assistant', msg);
-      }
-      rl.prompt();
-      return;
-    }
-
-    // Ejemplo: eliminar repo (GitHub)
-    if (lowerInput.match(/elimina(r)?( el)? repositorio/)) {
-      // Extraer nombre del repo del input
-      const repoName = lowerInput.split("repositorio").pop().replace(/[^\w-]/g, "").trim();
-      if (!repoName) {
-        const msg = `❌ No se pudo detectar el nombre del repositorio a eliminar.`;
-        console.log(`[Chatbot]: ${msg}`);
-        logInteraction('assistant', msg);
-        rl.prompt();
-        return;
-      }
-      const githubToken = process.env.GITHUB_TOKEN;
-      const owner = process.env.GITHUB_OWNER || "paulabaal12";
-      if (!githubToken) {
-        const msg = `❌ No se encontró el token de GitHub en .env (GITHUB_TOKEN).`;
-        console.log(`[Chatbot]: ${msg}`);
-        logInteraction('assistant', msg);
-        rl.prompt();
-        return;
-      }
-      try {
-        const result = await deleteGithubRepo(repoName, githubToken, owner);
-        const msg = `✅ ${result.message}`;
-        console.log(`[Chatbot]: ${msg}`);
-        logInteraction('assistant', msg);
-      } catch (err) {
-        const msg = `❌ Error al eliminar el repositorio: ${err}`;
-        console.log(`[Chatbot]: ${msg}`);
-        logInteraction('assistant', msg);
-      }
-      rl.prompt();
-      return;
-    }
-
-    // Ejemplo: escribir archivo
-    if (toolMatch && toolMatch.name === "write_file") {
-      // Buscar nombre de archivo y contenido en el input
-      const fileMatch = lowerInput.match(/(\w+\.\w+)/);
-      const fileName = fileMatch ? fileMatch[1] : "archivo.txt";
-      const content = logInteraction.lastReceta || `Archivo generado automáticamente: ${fileName}`;
-      if (fsClient) {
-        await fsClient.callTool('write_file', { path: `./${fileName}`, content });
-        console.log(`[Chatbot]: usando FilesystemMCP -> archivo creado ./${fileName}`);
-        logInteraction('assistant', `El archivo **${fileName}** fue guardado ✅`);
-      } else {
-        console.log(`[Chatbot]: No se encontró FilesystemMCP.`);
-      }
-      rl.prompt();
-      return;
-    }
-
-    // Ejemplo: git add/commit
-    if (toolMatch && toolMatch.name === "git_add") {
-      // Buscar repo y archivo
-      const repoMatch = lowerInput.match(/d:[\\/][^\s]+/i);
-      const fileMatch = lowerInput.match(/(\w+\.\w+)/);
-      const repoPath = repoMatch ? repoMatch[0].replace(/\\/g, "/") : null;
-      const fileName = fileMatch ? fileMatch[1] : null;
-      if (gitClient && repoPath && fileName) {
-        await gitClient.callTool('git_add', { path: repoPath, paths: [fileName] });
-        await gitClient.callTool('git_commit', { path: repoPath, message: `add ${fileName}` });
-        console.log(`[Chatbot]: usando GitMCP -> archivo agregado y commit hecho`);
-        logInteraction('assistant', `El archivo **${fileName}** fue agregado y commiteado en el repo`);
-      } else {
-        console.log(`[Chatbot]: No se encontró GitMCP o faltan datos.`);
-      }
-      rl.prompt();
-      return;
-    }
-
-    // Si hay toolMatch y toolArgs, invoca el tool MCP
-    if (toolMatch) {
-      // Buscar el cliente MCP adecuado usando el campo 'mcp' de all_tools.json
-      const mcpName = toolMatch.mcp;
-      const mcpIndex = servers.findIndex(cfg => (cfg.name || '').toLowerCase() === (mcpName || '').toLowerCase());
-      const mcpClient = mcpIndex !== -1 ? clients[mcpIndex] : undefined;
-      if (mcpClient) {
-        try {
-          console.log(`[Chatbot]: Analizando y consultando ${mcpName}...`);
-          const result = await mcpClient.callTool(toolMatch.name, toolArgs);
-          logInteraction('assistant', `[${mcpName}]:\n${JSON.stringify(result, null, 2)}`);
-          // Pasa el resultado a Claude para interpretación
-          const prompt = `Interpreta y embellece esta respuesta de un MCP para el usuario, en español, de forma natural:\n${JSON.stringify(result)}`;
-          const response = await claude.sendMessage(prompt, history);
-          history.push({ role: "user", content: input });
-          history.push({ role: "assistant", content: response.content });
-          logInteraction('user', input);
-          logInteraction('assistant', response.content[0]?.text || "(sin respuesta)");
-          console.log("[Claude]:", response.content[0]?.text || "(sin respuesta)");
-        } catch (err) {
-          const msg = `Error al invocar tool MCP: ${err}`;
-          console.log(msg);
-          logInteraction('assistant', msg);
-        }
-      } else {
-        const msg = `[Chatbot]: No existe un tool MCP para esta acción.`;
-        console.log(msg);
-        logInteraction('assistant', msg);
-      }
-      rl.prompt();
-      return;
+    } catch (e) {
+      // Si Claude no responde con JSON válido, sigue con el flujo normal
     }
 
     // Interacción normal con Claude

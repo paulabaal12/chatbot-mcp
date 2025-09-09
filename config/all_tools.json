@@ -346,6 +346,3317 @@
     "mcp": "FilesystemMCP"
   },
   {
+    "name": "git_add",
+    "title": "Git Add",
+    "description": "Stages changes in the Git repository for the next commit by adding file contents to the index (staging area). Can stage specific files/patterns or all changes (default: '.'). Returns the result as a JSON object.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "default": ".",
+          "description": "Path to the Git repository. Defaults to the directory set via `git_set_working_dir` for the session; set 'git_set_working_dir' if not set."
+        },
+        "files": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          ],
+          "default": ".",
+          "description": "Files or patterns to stage, defaults to all changes ('.')"
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates whether the operation was successful."
+        },
+        "statusMessage": {
+          "type": "string",
+          "description": "A message describing the result of the operation."
+        },
+        "filesStaged": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ],
+          "description": "The files or patterns that were staged."
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "current_branch": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The current branch, or null for detached HEAD."
+            },
+            "staged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Modified": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Deleted": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Renamed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Copied": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "TypeChanged": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes staged for the next commit."
+            },
+            "unstaged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Added"
+                },
+                "Modified": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Modified"
+                },
+                "Deleted": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Deleted"
+                },
+                "Renamed": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Renamed"
+                },
+                "Copied": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Copied"
+                },
+                "TypeChanged": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/TypeChanged"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes not staged for commit."
+            },
+            "untracked_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files not tracked by Git."
+            },
+            "conflicted_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files with merge conflicts."
+            },
+            "is_clean": {
+              "type": "boolean",
+              "description": "True if there are no pending changes."
+            }
+          },
+          "required": [
+            "current_branch",
+            "staged_changes",
+            "unstaged_changes",
+            "untracked_files",
+            "conflicted_files",
+            "is_clean"
+          ],
+          "additionalProperties": false,
+          "description": "The status of the repository after the add operation."
+        }
+      },
+      "required": [
+        "success",
+        "statusMessage",
+        "filesStaged"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_branch",
+    "title": "Git Branch",
+    "description": "Manages Git branches. Supports listing (local, remote, all), creating, deleting (with force), renaming (with force), and showing the current branch. Returns results as a JSON object.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the Git repository. Defaults to the directory set via `git_set_working_dir` for the session; set 'git_set_working_dir' if not set."
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "list",
+            "create",
+            "delete",
+            "rename",
+            "show-current"
+          ],
+          "description": "The branch operation to perform."
+        },
+        "branchName": {
+          "type": "string",
+          "description": "The name of the branch for create, delete, or rename operations."
+        },
+        "newBranchName": {
+          "type": "string",
+          "description": "The new name for the branch when renaming."
+        },
+        "startPoint": {
+          "type": "string",
+          "description": "The starting point (commit, tag, or branch) for a new branch."
+        },
+        "force": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force the operation (e.g., overwrite existing branch)."
+        },
+        "all": {
+          "type": "boolean",
+          "default": false,
+          "description": "List all branches (local and remote)."
+        },
+        "remote": {
+          "type": "boolean",
+          "default": false,
+          "description": "Act on remote-tracking branches."
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "mode": {
+          "type": "string",
+          "description": "The mode of operation that was performed."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "branches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "isCurrent": {
+                "type": "boolean"
+              },
+              "isRemote": {
+                "type": "boolean"
+              },
+              "commitHash": {
+                "type": "string"
+              },
+              "commitSubject": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "isCurrent",
+              "isRemote"
+            ],
+            "additionalProperties": false
+          },
+          "description": "A list of branches for the 'list' mode."
+        },
+        "currentBranch": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The current branch name."
+        }
+      },
+      "required": [
+        "success",
+        "mode",
+        "message"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_checkout",
+    "title": "Git Checkout",
+    "description": "Switches branches or restores working tree files. Can checkout branches, commits, tags, or specific file paths. Supports creating new branches and forcing checkout.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the Git repository. Defaults to the directory set via `git_set_working_dir` for the session; set 'git_set_working_dir' if not set."
+        },
+        "branchOrPath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The branch, commit, tag, or file path to checkout."
+        },
+        "newBranch": {
+          "type": "string",
+          "description": "Create a new branch with this name before checking out."
+        },
+        "force": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force checkout, discarding local changes."
+        }
+      },
+      "required": [
+        "branchOrPath"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "currentBranch": {
+          "type": "string",
+          "description": "The name of the current branch after the operation."
+        },
+        "newBranchCreated": {
+          "type": "boolean",
+          "description": "Indicates if a new branch was created."
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "current_branch": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The current branch, or null for detached HEAD."
+            },
+            "staged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Modified": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Deleted": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Renamed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Copied": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "TypeChanged": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes staged for the next commit."
+            },
+            "unstaged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Added"
+                },
+                "Modified": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Modified"
+                },
+                "Deleted": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Deleted"
+                },
+                "Renamed": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Renamed"
+                },
+                "Copied": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Copied"
+                },
+                "TypeChanged": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/TypeChanged"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes not staged for commit."
+            },
+            "untracked_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files not tracked by Git."
+            },
+            "conflicted_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files with merge conflicts."
+            },
+            "is_clean": {
+              "type": "boolean",
+              "description": "True if there are no pending changes."
+            }
+          },
+          "required": [
+            "current_branch",
+            "staged_changes",
+            "unstaged_changes",
+            "untracked_files",
+            "conflicted_files",
+            "is_clean"
+          ],
+          "additionalProperties": false,
+          "description": "The status of the repository after the checkout operation."
+        }
+      },
+      "required": [
+        "success",
+        "message"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_cherry_pick",
+    "title": "Git Cherry-Pick",
+    "description": "Applies the changes introduced by existing commits. Supports picking single commits or ranges, handling merge commits, and options like --no-commit and --signoff. Returns results as a JSON object, indicating success, failure, or conflicts.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the Git repository. Defaults to the directory set via `git_set_working_dir` for the session; set 'git_set_working_dir' if not set."
+        },
+        "commitRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The commit reference(s) to cherry-pick."
+        },
+        "mainline": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The parent number (1-based) for a merge commit."
+        },
+        "strategy": {
+          "type": "string",
+          "enum": [
+            "recursive",
+            "resolve",
+            "ours",
+            "theirs",
+            "octopus",
+            "subtree"
+          ],
+          "description": "The merge strategy to use."
+        },
+        "noCommit": {
+          "type": "boolean",
+          "default": false,
+          "description": "Apply changes but do not create a commit."
+        },
+        "signoff": {
+          "type": "boolean",
+          "default": false,
+          "description": "Add a 'Signed-off-by' line to the commit message."
+        }
+      },
+      "required": [
+        "commitRef"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "commitCreated": {
+          "type": "boolean",
+          "description": "Indicates if a new commit was created."
+        },
+        "conflicts": {
+          "type": "boolean",
+          "description": "Indicates if conflicts occurred."
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "current_branch": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The current branch, or null for detached HEAD."
+            },
+            "staged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Modified": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Deleted": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Renamed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Copied": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "TypeChanged": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes staged for the next commit."
+            },
+            "unstaged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Added"
+                },
+                "Modified": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Modified"
+                },
+                "Deleted": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Deleted"
+                },
+                "Renamed": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Renamed"
+                },
+                "Copied": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Copied"
+                },
+                "TypeChanged": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/TypeChanged"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes not staged for commit."
+            },
+            "untracked_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files not tracked by Git."
+            },
+            "conflicted_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files with merge conflicts."
+            },
+            "is_clean": {
+              "type": "boolean",
+              "description": "True if there are no pending changes."
+            }
+          },
+          "required": [
+            "current_branch",
+            "staged_changes",
+            "unstaged_changes",
+            "untracked_files",
+            "conflicted_files",
+            "is_clean"
+          ],
+          "additionalProperties": false,
+          "description": "The status of the repository after the cherry-pick operation."
+        }
+      },
+      "required": [
+        "success",
+        "message",
+        "commitCreated",
+        "conflicts"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_clean",
+    "title": "Git Clean",
+    "description": "Removes untracked files from the working directory. Supports dry runs, removing directories, and removing ignored files. CRITICAL: Requires explicit `force: true` parameter for safety as this is a destructive operation. Returns results as a JSON object.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the Git repository. Defaults to the directory set via `git_set_working_dir` for the session; set 'git_set_working_dir' if not set."
+        },
+        "force": {
+          "type": "boolean",
+          "description": "REQUIRED confirmation. Must be true to run the destructive clean operation."
+        },
+        "dryRun": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show what would be deleted without actually deleting."
+        },
+        "directories": {
+          "type": "boolean",
+          "default": false,
+          "description": "Remove untracked directories in addition to files."
+        },
+        "ignored": {
+          "type": "boolean",
+          "default": false,
+          "description": "Remove ignored files as well. Use with extreme caution."
+        }
+      },
+      "required": [
+        "force"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "filesAffected": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of files that were or would be affected."
+        },
+        "dryRun": {
+          "type": "boolean",
+          "description": "Indicates if the operation was a dry run."
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "current_branch": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The current branch, or null for detached HEAD."
+            },
+            "staged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Modified": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Deleted": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Renamed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Copied": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "TypeChanged": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes staged for the next commit."
+            },
+            "unstaged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Added"
+                },
+                "Modified": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Modified"
+                },
+                "Deleted": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Deleted"
+                },
+                "Renamed": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Renamed"
+                },
+                "Copied": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Copied"
+                },
+                "TypeChanged": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/TypeChanged"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes not staged for commit."
+            },
+            "untracked_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files not tracked by Git."
+            },
+            "conflicted_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files with merge conflicts."
+            },
+            "is_clean": {
+              "type": "boolean",
+              "description": "True if there are no pending changes."
+            }
+          },
+          "required": [
+            "current_branch",
+            "staged_changes",
+            "unstaged_changes",
+            "untracked_files",
+            "conflicted_files",
+            "is_clean"
+          ],
+          "additionalProperties": false,
+          "description": "The status of the repository after the clean operation."
+        }
+      },
+      "required": [
+        "success",
+        "message",
+        "filesAffected",
+        "dryRun"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_clear_working_dir",
+    "title": "Git Clear Working Directory",
+    "description": "Clears the session-specific working directory previously set by `git_set_working_dir`. Subsequent Git tool calls in this session will require an explicit `path` parameter or will default to the server's current working directory. Returns the result as a JSON object.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "confirm": {
+          "type": "string",
+          "enum": [
+            "Y",
+            "y",
+            "Yes",
+            "yes"
+          ],
+          "description": "Optional confirmation flag. The tool runs without it, but it can be provided for clarity."
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        }
+      },
+      "required": [
+        "success",
+        "message"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_clone",
+    "title": "Git Clone",
+    "description": "Clones a Git repository from a given URL into a specified absolute directory path. Supports cloning specific branches and setting clone depth.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "repositoryUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URL of the repository to clone."
+        },
+        "targetPath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The absolute path where the repository should be cloned."
+        },
+        "branch": {
+          "type": "string",
+          "description": "The specific branch to checkout after cloning."
+        },
+        "depth": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "description": "Create a shallow clone with a truncated history."
+        },
+        "quiet": {
+          "type": "boolean",
+          "default": false,
+          "description": "Operate quietly, suppressing progress output."
+        }
+      },
+      "required": [
+        "repositoryUrl",
+        "targetPath"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "path": {
+          "type": "string",
+          "description": "The path where the repository was cloned."
+        }
+      },
+      "required": [
+        "success",
+        "message",
+        "path"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_commit",
+    "title": "Git Commit",
+    "description": "Commits staged changes to the Git repository index with a descriptive message. Supports author override, amending, and empty commits. Returns a JSON result.\n\n**Commit Message Guidance:**\nWrite clear, concise commit messages using the Conventional Commits format: `type(scope): subject`.\n- `type`: feat, fix, docs, style, refactor, test, chore, etc.\n- `(scope)`: Optional context (e.g., `auth`, `ui`, filename).\n- `subject`: Imperative, present tense description (e.g., \"add login button\", not \"added login button\").\n\nI want to understand what you did and why. Use the body for detailed explanations, if necessary.\n\n**Example Commit Message:**\n```\nfeat(auth): implement password reset endpoint\n\n- Adds the /api/auth/reset-password endpoint to allow users to reset their password via an email link. \n- Includes input validation and rate limiting.\n\nCloses #123 (if applicable).\n```\n\n**Tool Options & Behavior:**\n- Commit related changes logically. Use the optional `filesToStage` parameter to auto-stage specific files before committing.\n- The `path` defaults to the session's working directory unless overridden. If `GIT_SIGN_COMMITS=true` is set, commits are signed (`-S`), with an optional `forceUnsignedOnFailure` fallback.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the Git repository."
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Commit message, preferably following Conventional Commits format."
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          "required": [
+            "name",
+            "email"
+          ],
+          "additionalProperties": false,
+          "description": "Override the commit author."
+        },
+        "allowEmpty": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow creating a commit with no changes."
+        },
+        "amend": {
+          "type": "boolean",
+          "default": false,
+          "description": "Amend the previous commit."
+        },
+        "forceUnsignedOnFailure": {
+          "type": "boolean",
+          "default": false,
+          "description": "If signing fails, attempt the commit without a signature."
+        },
+        "filesToStage": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "An array of file paths to stage before committing."
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "commitHash": {
+          "type": "string",
+          "description": "The hash of the new commit."
+        },
+        "committedFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of files included in the commit."
+        },
+        "nothingToCommit": {
+          "type": "boolean",
+          "description": "True if there were no changes to commit."
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "current_branch": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The current branch, or null for detached HEAD."
+            },
+            "staged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Modified": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Deleted": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Renamed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Copied": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "TypeChanged": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes staged for the next commit."
+            },
+            "unstaged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Added"
+                },
+                "Modified": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Modified"
+                },
+                "Deleted": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Deleted"
+                },
+                "Renamed": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Renamed"
+                },
+                "Copied": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Copied"
+                },
+                "TypeChanged": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/TypeChanged"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes not staged for commit."
+            },
+            "untracked_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files not tracked by Git."
+            },
+            "conflicted_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files with merge conflicts."
+            },
+            "is_clean": {
+              "type": "boolean",
+              "description": "True if there are no pending changes."
+            }
+          },
+          "required": [
+            "current_branch",
+            "staged_changes",
+            "unstaged_changes",
+            "untracked_files",
+            "conflicted_files",
+            "is_clean"
+          ],
+          "additionalProperties": false,
+          "description": "The status of the repository after the commit."
+        }
+      },
+      "required": [
+        "success",
+        "message"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_diff",
+    "title": "Git Diff",
+    "description": "Shows changes between commits, commit and working tree, etc. Can show staged changes or diff specific files. An optional 'includeUntracked' parameter (boolean) can be used to also show the content of untracked files. Returns the diff output as plain text.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the Git repository. Defaults to the directory set via `git_set_working_dir` for the session; set 'git_set_working_dir' if not set."
+        },
+        "commit1": {
+          "type": "string",
+          "description": "First commit, branch, or ref for comparison."
+        },
+        "commit2": {
+          "type": "string",
+          "description": "Second commit, branch, or ref for comparison."
+        },
+        "staged": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show diff of changes staged for the next commit."
+        },
+        "file": {
+          "type": "string",
+          "description": "Limit the diff output to a specific file path."
+        },
+        "includeUntracked": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include untracked files in the diff output."
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "diff": {
+          "type": "string",
+          "description": "The diff output. Will be 'No changes found.' if there are no differences."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        }
+      },
+      "required": [
+        "success",
+        "diff",
+        "message"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_fetch",
+    "title": "Git Fetch",
+    "description": "Downloads objects and refs from one or more repositories. Can fetch specific remotes or all, prune stale branches, and fetch tags.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the Git repository. Defaults to the directory set via `git_set_working_dir` for the session; set 'git_set_working_dir' if not set."
+        },
+        "remote": {
+          "type": "string",
+          "description": "The remote repository to fetch from (e.g., 'origin')."
+        },
+        "prune": {
+          "type": "boolean",
+          "default": false,
+          "description": "Remove remote-tracking references that no longer exist on the remote."
+        },
+        "tags": {
+          "type": "boolean",
+          "default": false,
+          "description": "Fetch all tags from the remote."
+        },
+        "all": {
+          "type": "boolean",
+          "default": false,
+          "description": "Fetch all remotes."
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        }
+      },
+      "required": [
+        "success",
+        "message"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": true
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_init",
+    "title": "Git Initialize",
+    "description": "Initializes a new Git repository at the specified path. If path is relative or omitted, it resolves against the session working directory (if you have set the git_working_dir). Can optionally set the initial branch name and create a bare repository.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path where the new Git repository should be initialized."
+        },
+        "initialBranch": {
+          "type": "string",
+          "description": "The name for the initial branch (e.g., 'main')."
+        },
+        "bare": {
+          "type": "boolean",
+          "default": false,
+          "description": "Create a bare repository with no working directory."
+        },
+        "quiet": {
+          "type": "boolean",
+          "default": false,
+          "description": "Suppress all output except for errors and warnings."
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "path": {
+          "type": "string",
+          "description": "The path where the repository was initialized."
+        },
+        "gitDirExists": {
+          "type": "boolean",
+          "description": "Confirms the .git directory was created."
+        }
+      },
+      "required": [
+        "success",
+        "message",
+        "path",
+        "gitDirExists"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_log",
+    "title": "Git Log",
+    "description": "Shows commit logs for the repository. Supports limiting count, filtering by author, date range, and specific branch/file. Returns a JSON object containing a list of commit objects (`commits` array) by default. If `showSignature: true` is used, it returns a JSON object where the `commits` array is empty and the raw signature verification output is included in the `rawOutput` field.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the Git repository."
+        },
+        "maxCount": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "description": "Limit the number of commits to output."
+        },
+        "author": {
+          "type": "string",
+          "description": "Limit commits to those by a specific author."
+        },
+        "since": {
+          "type": "string",
+          "description": "Show commits more recent than a specific date (e.g., '2 weeks ago')."
+        },
+        "until": {
+          "type": "string",
+          "description": "Show commits older than a specific date."
+        },
+        "branchOrFile": {
+          "type": "string",
+          "description": "Show logs for a specific branch, tag, or file path."
+        },
+        "showSignature": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show signature verification status for commits."
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "commits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "hash": {
+                "type": "string",
+                "description": "Full commit hash"
+              },
+              "authorName": {
+                "type": "string",
+                "description": "Author's name"
+              },
+              "authorEmail": {
+                "type": "string",
+                "format": "email",
+                "description": "Author's email"
+              },
+              "timestamp": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "description": "Commit timestamp (Unix epoch seconds)"
+              },
+              "subject": {
+                "type": "string",
+                "description": "Commit subject line"
+              },
+              "body": {
+                "type": "string",
+                "description": "Commit body"
+              }
+            },
+            "required": [
+              "hash",
+              "authorName",
+              "authorEmail",
+              "timestamp",
+              "subject"
+            ],
+            "additionalProperties": false
+          },
+          "description": "A list of commits."
+        },
+        "rawOutput": {
+          "type": "string",
+          "description": "Raw output from the git log command, used when showSignature is true."
+        }
+      },
+      "required": [
+        "success",
+        "message"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_merge",
+    "title": "Git Merge",
+    "description": "Merges the specified branch into the current branch. Supports options like --no-ff, --squash, and --abort. Returns the merge result as a JSON object.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the Git repository."
+        },
+        "branch": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The name of the branch to merge into the current branch."
+        },
+        "commitMessage": {
+          "type": "string",
+          "description": "Commit message for the merge commit."
+        },
+        "noFf": {
+          "type": "boolean",
+          "default": false,
+          "description": "Create a merge commit even if a fast-forward is possible."
+        },
+        "squash": {
+          "type": "boolean",
+          "default": false,
+          "description": "Combine merged changes into a single commit (requires manual commit)."
+        },
+        "abort": {
+          "type": "boolean",
+          "default": false,
+          "description": "Abort the current merge process."
+        }
+      },
+      "required": [
+        "branch"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "conflict": {
+          "type": "boolean",
+          "description": "True if the merge resulted in conflicts."
+        },
+        "fastForward": {
+          "type": "boolean",
+          "description": "True if the merge was a fast-forward."
+        },
+        "aborted": {
+          "type": "boolean",
+          "description": "True if the merge was aborted."
+        },
+        "needsManualCommit": {
+          "type": "boolean",
+          "description": "True if --squash was used."
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "current_branch": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The current branch, or null for detached HEAD."
+            },
+            "staged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Modified": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Deleted": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Renamed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Copied": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "TypeChanged": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes staged for the next commit."
+            },
+            "unstaged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Added"
+                },
+                "Modified": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Modified"
+                },
+                "Deleted": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Deleted"
+                },
+                "Renamed": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Renamed"
+                },
+                "Copied": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Copied"
+                },
+                "TypeChanged": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/TypeChanged"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes not staged for commit."
+            },
+            "untracked_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files not tracked by Git."
+            },
+            "conflicted_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files with merge conflicts."
+            },
+            "is_clean": {
+              "type": "boolean",
+              "description": "True if there are no pending changes."
+            }
+          },
+          "required": [
+            "current_branch",
+            "staged_changes",
+            "unstaged_changes",
+            "untracked_files",
+            "conflicted_files",
+            "is_clean"
+          ],
+          "additionalProperties": false,
+          "description": "The status of the repository after the merge operation."
+        }
+      },
+      "required": [
+        "success",
+        "message"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_pull",
+    "title": "Git Pull",
+    "description": "Fetches from and integrates with another repository or a local branch (e.g., 'git pull origin main'). Supports rebase and fast-forward only options. Returns the pull result as a JSON object.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the Git repository."
+        },
+        "remote": {
+          "type": "string",
+          "description": "The remote repository to pull from (e.g., 'origin')."
+        },
+        "branch": {
+          "type": "string",
+          "description": "The remote branch to pull."
+        },
+        "rebase": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use 'git pull --rebase' instead of merge."
+        },
+        "ffOnly": {
+          "type": "boolean",
+          "default": false,
+          "description": "Only allow fast-forward merges."
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "conflict": {
+          "type": "boolean",
+          "description": "True if a merge conflict occurred."
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "current_branch": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The current branch, or null for detached HEAD."
+            },
+            "staged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Modified": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Deleted": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Renamed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Copied": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "TypeChanged": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes staged for the next commit."
+            },
+            "unstaged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Added"
+                },
+                "Modified": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Modified"
+                },
+                "Deleted": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Deleted"
+                },
+                "Renamed": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Renamed"
+                },
+                "Copied": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Copied"
+                },
+                "TypeChanged": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/TypeChanged"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes not staged for commit."
+            },
+            "untracked_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files not tracked by Git."
+            },
+            "conflicted_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files with merge conflicts."
+            },
+            "is_clean": {
+              "type": "boolean",
+              "description": "True if there are no pending changes."
+            }
+          },
+          "required": [
+            "current_branch",
+            "staged_changes",
+            "unstaged_changes",
+            "untracked_files",
+            "conflicted_files",
+            "is_clean"
+          ],
+          "additionalProperties": false,
+          "description": "The status of the repository after the pull operation."
+        }
+      },
+      "required": [
+        "success",
+        "message"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_push",
+    "title": "Git Push",
+    "description": "Updates remote refs using local refs, sending objects necessary to complete the given refs. Supports pushing specific branches, tags, forcing, setting upstream, and deleting remote branches. Returns the push result as a JSON object.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the Git repository."
+        },
+        "remote": {
+          "type": "string",
+          "description": "The remote repository to push to (e.g., 'origin')."
+        },
+        "branch": {
+          "type": "string",
+          "description": "The local branch to push."
+        },
+        "remoteBranch": {
+          "type": "string",
+          "description": "The remote branch to push to."
+        },
+        "force": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force the push (use with caution)."
+        },
+        "forceWithLease": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force the push only if the remote ref is as expected."
+        },
+        "setUpstream": {
+          "type": "boolean",
+          "default": false,
+          "description": "Set the upstream tracking configuration."
+        },
+        "tags": {
+          "type": "boolean",
+          "default": false,
+          "description": "Push all tags."
+        },
+        "delete": {
+          "type": "boolean",
+          "default": false,
+          "description": "Delete the remote branch."
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "rejected": {
+          "type": "boolean",
+          "description": "True if the push was rejected."
+        },
+        "deleted": {
+          "type": "boolean",
+          "description": "True if a remote branch was deleted."
+        }
+      },
+      "required": [
+        "success",
+        "message"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_rebase",
+    "title": "Git Rebase",
+    "description": "Reapplies commits on top of another base tip. Supports starting a rebase (standard or interactive), continuing, aborting, or skipping steps in an ongoing rebase. Returns results as a JSON object.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the local Git repository."
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "start",
+            "continue",
+            "abort",
+            "skip"
+          ],
+          "default": "start",
+          "description": "Rebase operation mode."
+        },
+        "upstream": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The upstream branch or commit to rebase onto."
+        },
+        "branch": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The branch to rebase."
+        },
+        "interactive": {
+          "type": "boolean",
+          "default": false,
+          "description": "Perform an interactive rebase."
+        },
+        "strategy": {
+          "type": "string",
+          "enum": [
+            "recursive",
+            "resolve",
+            "ours",
+            "theirs",
+            "octopus",
+            "subtree"
+          ],
+          "description": "The merge strategy to use."
+        },
+        "strategyOption": {
+          "type": "string",
+          "description": "Pass a specific option to the merge strategy."
+        },
+        "onto": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Rebase onto a specific commit/branch instead of the upstream's base."
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "rebaseCompleted": {
+          "type": "boolean",
+          "description": "True if the rebase finished successfully."
+        },
+        "needsManualAction": {
+          "type": "boolean",
+          "description": "True if conflicts or interactive steps require user input."
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "current_branch": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The current branch, or null for detached HEAD."
+            },
+            "staged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Modified": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Deleted": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Renamed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Copied": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "TypeChanged": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes staged for the next commit."
+            },
+            "unstaged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Added"
+                },
+                "Modified": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Modified"
+                },
+                "Deleted": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Deleted"
+                },
+                "Renamed": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Renamed"
+                },
+                "Copied": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Copied"
+                },
+                "TypeChanged": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/TypeChanged"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes not staged for commit."
+            },
+            "untracked_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files not tracked by Git."
+            },
+            "conflicted_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files with merge conflicts."
+            },
+            "is_clean": {
+              "type": "boolean",
+              "description": "True if there are no pending changes."
+            }
+          },
+          "required": [
+            "current_branch",
+            "staged_changes",
+            "unstaged_changes",
+            "untracked_files",
+            "conflicted_files",
+            "is_clean"
+          ],
+          "additionalProperties": false,
+          "description": "The status of the repository after the rebase operation."
+        }
+      },
+      "required": [
+        "success",
+        "message"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_remote",
+    "title": "Git Remote",
+    "description": "Manages remote repositories (list, add, remove, show).",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the Git repository."
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "list",
+            "add",
+            "remove",
+            "show"
+          ],
+          "description": "Operation mode."
+        },
+        "name": {
+          "type": "string",
+          "description": "Remote name (required for 'add', 'remove', 'show')."
+        },
+        "url": {
+          "type": "string",
+          "description": "Remote URL (required for 'add')."
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "mode": {
+          "type": "string",
+          "description": "The mode of operation that was performed."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "remotes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "fetchUrl": {
+                "type": "string"
+              },
+              "pushUrl": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "fetchUrl",
+              "pushUrl"
+            ],
+            "additionalProperties": false
+          },
+          "description": "A list of remotes for the 'list' mode."
+        },
+        "details": {
+          "type": "string",
+          "description": "Details for the 'show' mode."
+        }
+      },
+      "required": [
+        "success",
+        "mode"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_reset",
+    "title": "Git Reset",
+    "description": "Resets the current HEAD to a specified state. Supports different modes ('soft', 'mixed', 'hard', 'merge', 'keep') to control how the index and working tree are affected. Can reset to a specific commit. USE 'hard' MODE WITH EXTREME CAUTION as it discards local changes.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the Git repository."
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "soft",
+            "mixed",
+            "hard",
+            "merge",
+            "keep"
+          ],
+          "default": "mixed",
+          "description": "Reset mode."
+        },
+        "commit": {
+          "type": "string",
+          "description": "Commit, branch, or ref to reset to. Defaults to HEAD."
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "changesSummary": {
+          "type": "string",
+          "description": "Summary of changes, if any."
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "current_branch": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The current branch, or null for detached HEAD."
+            },
+            "staged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Modified": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Deleted": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Renamed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Copied": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "TypeChanged": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes staged for the next commit."
+            },
+            "unstaged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Added"
+                },
+                "Modified": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Modified"
+                },
+                "Deleted": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Deleted"
+                },
+                "Renamed": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Renamed"
+                },
+                "Copied": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Copied"
+                },
+                "TypeChanged": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/TypeChanged"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes not staged for commit."
+            },
+            "untracked_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files not tracked by Git."
+            },
+            "conflicted_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files with merge conflicts."
+            },
+            "is_clean": {
+              "type": "boolean",
+              "description": "True if there are no pending changes."
+            }
+          },
+          "required": [
+            "current_branch",
+            "staged_changes",
+            "unstaged_changes",
+            "untracked_files",
+            "conflicted_files",
+            "is_clean"
+          ],
+          "additionalProperties": false,
+          "description": "The status of the repository after the reset operation."
+        }
+      },
+      "required": [
+        "success",
+        "message"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_set_working_dir",
+    "title": "Git Set Working Directory",
+    "description": "Sets the default working directory for the current session. Subsequent Git tool calls within this session can use '.' for the `path` parameter, which will resolve to this directory. Optionally validates if the path is a Git repository (`validateGitRepo: true`). Can optionally initialize a Git repository with 'git init' if it's not already one and `initializeIfNotPresent: true` is set. Returns the result as a JSON object. IMPORTANT: The provided path must be absolute.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The absolute path to set as the default working directory."
+        },
+        "validateGitRepo": {
+          "type": "boolean",
+          "default": true,
+          "description": "Validate that the path is a Git repository."
+        },
+        "initializeIfNotPresent": {
+          "type": "boolean",
+          "default": false,
+          "description": "If not a Git repository, initialize it with 'git init'."
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "path": {
+          "type": "string",
+          "description": "The path that was set as the working directory."
+        },
+        "initialized": {
+          "type": "boolean",
+          "description": "Indicates if a new repository was initialized."
+        }
+      },
+      "required": [
+        "success",
+        "message",
+        "path",
+        "initialized"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_show",
+    "title": "Git Show",
+    "description": "Shows information about Git objects (commits, tags, blobs, trees) based on a reference. Can optionally show the content of a specific file at that reference. Returns the raw output.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the local Git repository."
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The object reference (commit hash, tag, branch, etc.) to show."
+        },
+        "filePath": {
+          "type": "string",
+          "description": "Optional specific file path within the ref to show."
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "content": {
+          "type": "string",
+          "description": "Raw output from the git show command."
+        }
+      },
+      "required": [
+        "success",
+        "content"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_stash",
+    "title": "Git Stash",
+    "description": "Manages stashed changes in the working directory. Supports listing stashes, applying/popping specific stashes (with conflict detection), dropping stashes, and saving current changes to a new stash with an optional message. Returns results as a JSON object.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the local Git repository."
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "list",
+            "apply",
+            "pop",
+            "drop",
+            "save"
+          ],
+          "description": "The stash operation to perform."
+        },
+        "stashRef": {
+          "type": "string",
+          "description": "Stash reference (e.g., 'stash@{1}')."
+        },
+        "message": {
+          "type": "string",
+          "description": "Optional descriptive message for 'save' mode."
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "mode": {
+          "type": "string",
+          "description": "The mode of operation that was performed."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "stashes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "type": "string"
+              },
+              "branch": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "ref",
+              "branch",
+              "description"
+            ],
+            "additionalProperties": false
+          },
+          "description": "A list of stashes for the 'list' mode."
+        },
+        "conflicts": {
+          "type": "boolean",
+          "description": "Indicates if a merge conflict occurred."
+        },
+        "stashCreated": {
+          "type": "boolean",
+          "description": "Indicates if a stash was created."
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "current_branch": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The current branch, or null for detached HEAD."
+            },
+            "staged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Modified": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Deleted": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Renamed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Copied": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "TypeChanged": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes staged for the next commit."
+            },
+            "unstaged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Added"
+                },
+                "Modified": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Modified"
+                },
+                "Deleted": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Deleted"
+                },
+                "Renamed": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Renamed"
+                },
+                "Copied": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/Copied"
+                },
+                "TypeChanged": {
+                  "$ref": "#/properties/status/properties/staged_changes/properties/TypeChanged"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes not staged for commit."
+            },
+            "untracked_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files not tracked by Git."
+            },
+            "conflicted_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files with merge conflicts."
+            },
+            "is_clean": {
+              "type": "boolean",
+              "description": "True if there are no pending changes."
+            }
+          },
+          "required": [
+            "current_branch",
+            "staged_changes",
+            "unstaged_changes",
+            "untracked_files",
+            "conflicted_files",
+            "is_clean"
+          ],
+          "additionalProperties": false,
+          "description": "The status of the repository after the stash operation."
+        }
+      },
+      "required": [
+        "success",
+        "mode"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_status",
+    "title": "Git Status",
+    "description": "Retrieves the status of a Git repository. Returns a JSON object detailing the current branch, cleanliness, and changes. Staged and unstaged changes are grouped by status (e.g., Added, Modified), alongside lists of untracked and conflicted files.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the Git repository."
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "current_branch": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The current branch, or null for detached HEAD."
+        },
+        "staged_changes": {
+          "type": "object",
+          "properties": {
+            "Added": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "Modified": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "Deleted": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "Renamed": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "Copied": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "TypeChanged": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false,
+          "description": "Changes staged for the next commit."
+        },
+        "unstaged_changes": {
+          "type": "object",
+          "properties": {
+            "Added": {
+              "$ref": "#/properties/staged_changes/properties/Added"
+            },
+            "Modified": {
+              "$ref": "#/properties/staged_changes/properties/Modified"
+            },
+            "Deleted": {
+              "$ref": "#/properties/staged_changes/properties/Deleted"
+            },
+            "Renamed": {
+              "$ref": "#/properties/staged_changes/properties/Renamed"
+            },
+            "Copied": {
+              "$ref": "#/properties/staged_changes/properties/Copied"
+            },
+            "TypeChanged": {
+              "$ref": "#/properties/staged_changes/properties/TypeChanged"
+            }
+          },
+          "additionalProperties": false,
+          "description": "Changes not staged for commit."
+        },
+        "untracked_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Files not tracked by Git."
+        },
+        "conflicted_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Files with merge conflicts."
+        },
+        "is_clean": {
+          "type": "boolean",
+          "description": "True if there are no pending changes."
+        }
+      },
+      "required": [
+        "current_branch",
+        "staged_changes",
+        "unstaged_changes",
+        "untracked_files",
+        "conflicted_files",
+        "is_clean"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_tag",
+    "title": "Git Tag",
+    "description": "Manages Git tags. Supports listing existing tags, creating new lightweight or annotated tags against specific commits, and deleting local tags. Returns results as a JSON object.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the local Git repository."
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "list",
+            "create",
+            "delete"
+          ],
+          "description": "The tag operation to perform."
+        },
+        "tagName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The name for the tag."
+        },
+        "message": {
+          "type": "string",
+          "description": "The annotation message for the tag."
+        },
+        "commitRef": {
+          "type": "string",
+          "description": "The commit hash, branch, or other reference to tag."
+        },
+        "annotate": {
+          "type": "boolean",
+          "default": false,
+          "description": "Create an annotated tag."
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "mode": {
+          "type": "string",
+          "description": "The mode of operation that was performed."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of tags for the 'list' mode."
+        },
+        "tagName": {
+          "type": "string",
+          "description": "The name of the tag that was created or deleted."
+        }
+      },
+      "required": [
+        "success",
+        "mode"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_worktree",
+    "title": "Git Worktree",
+    "description": "Manages Git worktrees. Supports listing, adding, removing, moving, and pruning worktrees. Returns results as a JSON object.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the local Git repository."
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "list",
+            "add",
+            "remove",
+            "move",
+            "prune"
+          ],
+          "description": "The worktree operation to perform."
+        },
+        "worktreePath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path of the worktree."
+        },
+        "commitish": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Branch or commit to checkout in the new worktree."
+        },
+        "newBranch": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Create a new branch in the worktree."
+        },
+        "force": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force the operation."
+        },
+        "detach": {
+          "type": "boolean",
+          "default": false,
+          "description": "Detach HEAD in the new worktree."
+        },
+        "newPath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The new path for the worktree."
+        },
+        "verbose": {
+          "type": "boolean",
+          "default": false,
+          "description": "Provide more detailed output."
+        },
+        "dryRun": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show what would be done without actually doing it."
+        },
+        "expire": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Prune entries older than this time (e.g., '1.month.ago')."
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates if the command was successful."
+        },
+        "mode": {
+          "type": "string",
+          "description": "The mode of operation that was performed."
+        },
+        "message": {
+          "type": "string",
+          "description": "A summary message of the result."
+        },
+        "worktrees": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "head": {
+                "type": "string"
+              },
+              "branch": {
+                "type": "string"
+              },
+              "isBare": {
+                "type": "boolean"
+              },
+              "isLocked": {
+                "type": "boolean"
+              },
+              "isPrunable": {
+                "type": "boolean"
+              },
+              "prunableReason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "path",
+              "head",
+              "isBare",
+              "isLocked",
+              "isPrunable"
+            ],
+            "additionalProperties": false
+          },
+          "description": "A list of worktrees for the 'list' mode."
+        }
+      },
+      "required": [
+        "success",
+        "mode"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
+    "name": "git_wrapup_instructions",
+    "title": "Git Wrap-up Instructions",
+    "description": "Provides a standard Git wrap-up workflow. This involves reviewing changes with `git_diff`, updating documentation (README, CHANGELOG), and making logical, descriptive commits using the `git_commit` tool. Can optionally include instructions to create a Git tag after committing. The tool's response also includes the current `git status` output. You should set the working directory using `git_set_working_dir` before running this tool.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "acknowledgement": {
+          "type": "string",
+          "enum": [
+            "Y",
+            "y",
+            "Yes",
+            "yes"
+          ],
+          "description": "Acknowledgement to initiate the wrap-up workflow."
+        },
+        "updateAgentMetaFiles": {
+          "type": "string",
+          "enum": [
+            "Y",
+            "y",
+            "Yes",
+            "yes"
+          ],
+          "description": "Include an instruction to update agent-specific meta files."
+        },
+        "createTag": {
+          "type": "boolean",
+          "description": "If true, instructs the agent to create a Git tag after committing all changes. Only set to true if given permission to do so."
+        }
+      },
+      "required": [
+        "acknowledgement"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "instructions": {
+          "type": "string",
+          "description": "The set of instructions for the wrap-up workflow."
+        },
+        "gitStatus": {
+          "type": "object",
+          "properties": {
+            "current_branch": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The current branch, or null for detached HEAD."
+            },
+            "staged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Modified": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Deleted": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Renamed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "Copied": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "TypeChanged": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes staged for the next commit."
+            },
+            "unstaged_changes": {
+              "type": "object",
+              "properties": {
+                "Added": {
+                  "$ref": "#/properties/gitStatus/properties/staged_changes/properties/Added"
+                },
+                "Modified": {
+                  "$ref": "#/properties/gitStatus/properties/staged_changes/properties/Modified"
+                },
+                "Deleted": {
+                  "$ref": "#/properties/gitStatus/properties/staged_changes/properties/Deleted"
+                },
+                "Renamed": {
+                  "$ref": "#/properties/gitStatus/properties/staged_changes/properties/Renamed"
+                },
+                "Copied": {
+                  "$ref": "#/properties/gitStatus/properties/staged_changes/properties/Copied"
+                },
+                "TypeChanged": {
+                  "$ref": "#/properties/gitStatus/properties/staged_changes/properties/TypeChanged"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Changes not staged for commit."
+            },
+            "untracked_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files not tracked by Git."
+            },
+            "conflicted_files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files with merge conflicts."
+            },
+            "is_clean": {
+              "type": "boolean",
+              "description": "True if there are no pending changes."
+            }
+          },
+          "required": [
+            "current_branch",
+            "staged_changes",
+            "unstaged_changes",
+            "untracked_files",
+            "conflicted_files",
+            "is_clean"
+          ],
+          "additionalProperties": false,
+          "description": "The current structured git status."
+        },
+        "gitStatusError": {
+          "type": "string",
+          "description": "Any error message if getting git status failed."
+        }
+      },
+      "required": [
+        "instructions"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "mcp": "GitMCP"
+  },
+  {
     "name": "github_create_repo",
     "description": "Create a new GitHub repository for the authenticated user. Requires repoName.",
     "input_schema": {
@@ -405,6 +3716,50 @@
         "owner": {
           "type": "string",
           "description": "Owner of the repository (username or org)"
+        }
+      },
+      "required": [
+        "repoName",
+        "owner"
+      ],
+      "additionalProperties": false
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "success",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {},
+    "mcp": "GithubMCP"
+  },
+  {
+    "name": "github_clone_repo",
+    "description": "Clone a GitHub repository to a local path. Requires repoName, owner, and optional destPath.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "repoName": {
+          "type": "string",
+          "description": "Name of the repository to clone"
+        },
+        "owner": {
+          "type": "string",
+          "description": "Owner of the repository (username or org)"
+        },
+        "destPath": {
+          "type": "string",
+          "description": "Destination path to clone into (optional)"
         }
       },
       "required": [

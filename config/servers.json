@@ -5,6 +5,13 @@
     "command": "npx",
   "args": ["-y", "@modelcontextprotocol/server-filesystem", "D:/Documentos"],
     "cwd": "D:/Documentos"},
+    {
+  "name": "GitMCP",
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@cyanheads/git-mcp-server", "D:/Documentos"],
+  "cwd": "D:/Documentos"
+},
   {
     "name": "GithubMCP",
     "type": "stdio",

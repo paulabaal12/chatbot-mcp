@@ -6,6 +6,8 @@ dotenv.config({ path: './config/.env' });
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
+import { exec } from 'child_process';
+
 const tools = [
   {
     name: 'github_create_repo',
@@ -39,6 +41,29 @@ const tools = [
       properties: {
         repoName: { type: 'string', description: 'Name of the repository to delete' },
         owner: { type: 'string', description: 'Owner of the repository (username or org)' }
+      },
+      required: ['repoName', 'owner'],
+      additionalProperties: false
+    },
+    output_schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' }
+      },
+      required: ['success', 'message'],
+      additionalProperties: false
+    }
+  },
+  {
+    name: 'github_clone_repo',
+    description: 'Clone a GitHub repository to a local path. Requires repoName, owner, and optional destPath.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        repoName: { type: 'string', description: 'Name of the repository to clone' },
+        owner: { type: 'string', description: 'Owner of the repository (username or org)' },
+        destPath: { type: 'string', description: 'Destination path to clone into (optional)' }
       },
       required: ['repoName', 'owner'],
       additionalProperties: false
@@ -97,6 +122,26 @@ rl.on('line', async (line) => {
       } catch (err) {
         sendRPC(id, { success: false, message: String(err) });
       }
+      return;
+    }
+    if (name === 'github_clone_repo') {
+      let { repoName, owner, destPath } = args || {};
+      if (!repoName) {
+        sendRPC(id, { success: false, message: 'repoName is required' });
+        return;
+      }
+      if (!owner) {
+        owner = process.env.GITHUB_OWNER || 'paulabaal12';
+      }
+      const repoUrl = `https://github.com/${owner}/${repoName}.git`;
+      const cloneCmd = destPath ? `git clone ${repoUrl} "${destPath.replace(/\\/g, '/')}"` : `git clone ${repoUrl}`;
+      exec(cloneCmd, (err, stdout, stderr) => {
+        if (err) {
+          sendRPC(id, { success: false, message: stderr || String(err) });
+        } else {
+          sendRPC(id, { success: true, message: `Cloned to ${destPath || './'}` });
+        }
+      });
       return;
     }
   }

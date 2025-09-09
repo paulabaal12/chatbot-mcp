@@ -1,0 +1,667 @@
+[
+  {
+    "name": "read_file",
+    "description": "Read the complete contents of a file as text. DEPRECATED: Use read_text_file instead.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "tail": {
+          "type": "number",
+          "description": "If provided, returns only the last N lines of the file"
+        },
+        "head": {
+          "type": "number",
+          "description": "If provided, returns only the first N lines of the file"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "FilesystemMCP"
+  },
+  {
+    "name": "read_text_file",
+    "description": "Read the complete contents of a file from the file system as text. Handles various text encodings and provides detailed error messages if the file cannot be read. Use this tool when you need to examine the contents of a single file. Use the 'head' parameter to read only the first N lines of a file, or the 'tail' parameter to read only the last N lines of a file. Operates on the file as text regardless of extension. Only works within allowed directories.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "tail": {
+          "type": "number",
+          "description": "If provided, returns only the last N lines of the file"
+        },
+        "head": {
+          "type": "number",
+          "description": "If provided, returns only the first N lines of the file"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "FilesystemMCP"
+  },
+  {
+    "name": "read_media_file",
+    "description": "Read an image or audio file. Returns the base64 encoded data and MIME type. Only works within allowed directories.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "FilesystemMCP"
+  },
+  {
+    "name": "read_multiple_files",
+    "description": "Read the contents of multiple files simultaneously. This is more efficient than reading files one by one when you need to analyze or compare multiple files. Each file's content is returned with its path as a reference. Failed reads for individual files won't stop the entire operation. Only works within allowed directories.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "paths"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "FilesystemMCP"
+  },
+  {
+    "name": "write_file",
+    "description": "Create a new file or completely overwrite an existing file with new content. Use with caution as it will overwrite existing files without warning. Handles text content with proper encoding. Only works within allowed directories.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "content"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "FilesystemMCP"
+  },
+  {
+    "name": "edit_file",
+    "description": "Make line-based edits to a text file. Each edit replaces exact line sequences with new content. Returns a git-style diff showing the changes made. Only works within allowed directories.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "edits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "oldText": {
+                "type": "string",
+                "description": "Text to search for - must match exactly"
+              },
+              "newText": {
+                "type": "string",
+                "description": "Text to replace with"
+              }
+            },
+            "required": [
+              "oldText",
+              "newText"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "dryRun": {
+          "type": "boolean",
+          "default": false,
+          "description": "Preview changes using git-style diff format"
+        }
+      },
+      "required": [
+        "path",
+        "edits"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "FilesystemMCP"
+  },
+  {
+    "name": "create_directory",
+    "description": "Create a new directory or ensure a directory exists. Can create multiple nested directories in one operation. If the directory already exists, this operation will succeed silently. Perfect for setting up directory structures for projects or ensuring required paths exist. Only works within allowed directories.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "FilesystemMCP"
+  },
+  {
+    "name": "list_directory",
+    "description": "Get a detailed listing of all files and directories in a specified path. Results clearly distinguish between files and directories with [FILE] and [DIR] prefixes. This tool is essential for understanding directory structure and finding specific files within a directory. Only works within allowed directories.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "FilesystemMCP"
+  },
+  {
+    "name": "list_directory_with_sizes",
+    "description": "Get a detailed listing of all files and directories in a specified path, including sizes. Results clearly distinguish between files and directories with [FILE] and [DIR] prefixes. This tool is useful for understanding directory structure and finding specific files within a directory. Only works within allowed directories.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "sortBy": {
+          "type": "string",
+          "enum": [
+            "name",
+            "size"
+          ],
+          "default": "name",
+          "description": "Sort entries by name or size"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "FilesystemMCP"
+  },
+  {
+    "name": "directory_tree",
+    "description": "Get a recursive tree view of files and directories as a JSON structure. Each entry includes 'name', 'type' (file/directory), and 'children' for directories. Files have no children array, while directories always have a children array (which may be empty). The output is formatted with 2-space indentation for readability. Only works within allowed directories.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "FilesystemMCP"
+  },
+  {
+    "name": "move_file",
+    "description": "Move or rename files and directories. Can move files between directories and rename them in a single operation. If the destination exists, the operation will fail. Works across different directories and can be used for simple renaming within the same directory. Both source and destination must be within allowed directories.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "destination": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "destination"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "FilesystemMCP"
+  },
+  {
+    "name": "search_files",
+    "description": "Recursively search for files and directories matching a pattern. Searches through all subdirectories from the starting path. The search is case-insensitive and matches partial names. Returns full paths to all matching items. Great for finding files when you don't know their exact location. Only searches within allowed directories.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "excludePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      },
+      "required": [
+        "path",
+        "pattern"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "FilesystemMCP"
+  },
+  {
+    "name": "get_file_info",
+    "description": "Retrieve detailed metadata about a file or directory. Returns comprehensive information including size, creation time, last modified time, permissions, and type. This tool is perfect for understanding file characteristics without reading the actual content. Only works within allowed directories.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "FilesystemMCP"
+  },
+  {
+    "name": "list_allowed_directories",
+    "description": "Returns the list of directories that this server is allowed to access. Subdirectories within these allowed directories are also accessible. Use this to understand which directories and their nested paths are available before trying to access files.",
+    "input_schema": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "FilesystemMCP"
+  },
+  {
+    "name": "github_create_repo",
+    "description": "Create a new GitHub repository for the authenticated user. Requires repoName.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "repoName": {
+          "type": "string",
+          "description": "Name of the repository to create"
+        }
+      },
+      "required": [
+        "repoName"
+      ],
+      "additionalProperties": false
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "html_url": {
+          "type": "string"
+        },
+        "private": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "full_name",
+        "html_url",
+        "private"
+      ],
+      "additionalProperties": true
+    },
+    "annotations": {},
+    "mcp": "GithubMCP"
+  },
+  {
+    "name": "github_delete_repo",
+    "description": "Delete a GitHub repository for the authenticated user. Requires repoName and owner.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "repoName": {
+          "type": "string",
+          "description": "Name of the repository to delete"
+        },
+        "owner": {
+          "type": "string",
+          "description": "Owner of the repository (username or org)"
+        }
+      },
+      "required": [
+        "repoName",
+        "owner"
+      ],
+      "additionalProperties": false
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "success",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {},
+    "mcp": "GithubMCP"
+  },
+  {
+    "name": "recommend_by_mood_and_season",
+    "description": "Recommends foods or recipes based on mood and optionally season (e.g., happy + summer).",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "mood": {
+          "type": "string",
+          "description": "Main mood (happy, excited, tender, scared, angry, sad)"
+        },
+        "season": {
+          "type": "string",
+          "description": "Season (spring, summer, autumn, winter) (optional)"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type: \"food\" or \"recipe\" (optional, default: recipe)"
+        }
+      },
+      "required": [
+        "mood"
+      ]
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "KitchenMCP"
+  },
+  {
+    "name": "suggest_utensils_for_recipe",
+    "description": "Suggests necessary kitchen utensils for a given recipe (by name).",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "recipe_name": {
+          "type": "string",
+          "description": "Name of the recipe or dish"
+        }
+      },
+      "required": [
+        "recipe_name"
+      ]
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "KitchenMCP"
+  },
+  {
+    "name": "get_foods",
+    "description": "Get all available foods",
+    "input_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "KitchenMCP"
+  },
+  {
+    "name": "suggest_recipe_by_diet",
+    "description": "Suggests recipes by diet type (e.g., vegan, keto, Mediterranean, paleo, DASH).",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "diet": {
+          "type": "string",
+          "description": "Diet type: vegan, keto, Mediterranean, paleo, DASH"
+        },
+        "maxCalories": {
+          "type": "number",
+          "description": "Maximum calories (optional)"
+        }
+      },
+      "required": [
+        "diet"
+      ]
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "KitchenMCP"
+  },
+  {
+    "name": "suggest_ingredient_substitution",
+    "description": "Suggests substitutes for a given ingredient (e.g., orange juice).",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "ingredient": {
+          "type": "string",
+          "description": "Name of the ingredient to substitute"
+        }
+      },
+      "required": [
+        "ingredient"
+      ]
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "KitchenMCP"
+  },
+  {
+    "name": "get_food_by_name",
+    "description": "Find a specific food by name",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the food to search for"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "KitchenMCP"
+  },
+  {
+    "name": "search_foods",
+    "description": "Search foods by nutritional criteria",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "minProtein": {
+          "type": "number",
+          "description": "Minimum protein in grams"
+        },
+        "maxFat": {
+          "type": "number",
+          "description": "Maximum fat in grams"
+        },
+        "maxCalories": {
+          "type": "number",
+          "description": "Maximum calories"
+        }
+      }
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "KitchenMCP"
+  },
+  {
+    "name": "get_ingredients",
+    "description": "Get list of available ingredients",
+    "input_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "KitchenMCP"
+  },
+  {
+    "name": "get_recipe_suggestions",
+    "description": "Get recipe suggestions based on nutritional content",
+    "input_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "KitchenMCP"
+  },
+  {
+    "name": "get_recipes",
+    "description": "Get all available recipes",
+    "input_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "KitchenMCP"
+  },
+  {
+    "name": "get_recipes_by_ingredients",
+    "description": "Find recipes by specific ingredients",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "ingredients": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of ingredients to search for"
+        }
+      },
+      "required": [
+        "ingredients"
+      ]
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "KitchenMCP"
+  },
+  {
+    "name": "delete_file",
+    "description": "Delete a file at the given absolute or allowed relative path.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "filePath": {
+          "type": "string",
+          "description": "Absolute or allowed relative path to the file to delete"
+        }
+      },
+      "required": [
+        "filePath"
+      ],
+      "additionalProperties": false
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "success",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {},
+    "mcp": "FilesystemDeleteMCP"
+  }
+]

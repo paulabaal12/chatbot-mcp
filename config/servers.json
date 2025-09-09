@@ -1,0 +1,29 @@
+[
+  {
+    "name": "FilesystemMCP",
+    "type": "stdio",
+    "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-filesystem", "D:/Documentos"],
+    "cwd": "D:/Documentos"},
+  {
+    "name": "GithubMCP",
+    "type": "stdio",
+    "command": "node",
+    "args": ["scripts/mcp_github.js"],
+    "cwd": "D:/Documentos/GitHub/chatbot-mcp"
+  },
+   {
+    "name": "KitchenMCP",
+    "method": "stdio",
+    "command": "node",
+    "args": ["../PROY1-REDES/src/mcp-server.js"],
+    "cwd": "D:/Documentos/GitHub/PROY1-REDES"
+  },
+  {
+    "name": "FilesystemDeleteMCP",
+    "type": "stdio",
+    "command": "node",
+    "args": ["scripts/mcp_filesystem_delete.js"],
+    "cwd": "D:/Documentos/GitHub/chatbot-mcp"
+  }
+]

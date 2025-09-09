@@ -60,7 +60,21 @@ async function main() {
 
     // FLUJO: Claude actúa como dispatcher de tools
     // Se le pasa la lista de tools y el input, y debe responder con el nombre de la tool y los argumentos
-  const dispatcherPrompt = `Eres un asistente que solo puede responder usando las siguientes tools JSON. Dado el mensaje del usuario, responde únicamente con un JSON de la forma {\n  \"tool\": <nombre_tool>,\n  \"args\": { ...argumentos... }\n}\nNo expliques nada, solo responde el JSON.\nIMPORTANTE: \n- Si el usuario pide crear un archivo, debes usar la tool 'write_file' y pasar correctamente los argumentos 'path' (ruta completa del archivo) y 'content' (contenido, puede ser vacío si el usuario no lo especifica).\n- Si la tool requiere un argumento 'owner' y el usuario no lo especifica, usa siempre 'paulabaal12' como valor por defecto.\nLista de tools disponibles:\n${JSON.stringify(allTools, null, 2)}\n\nMensaje del usuario:\n${input}`;
+    // Preprocesamiento: Si el usuario pide clonar un repo y la ruta destino es D:/Documentos/GitHub, ajusta para usar una subcarpeta
+    let userInput = input;
+    const cloneMatch = input.match(/clona el repositorio ([^ ]+) en ([^\n]+)/i);
+    if (cloneMatch) {
+      const repoName = cloneMatch[1].trim();
+      let destPath = cloneMatch[2].replace(/\\/g, '/').trim();
+      if (destPath.endsWith('/')) destPath = destPath.slice(0, -1);
+      // Si la ruta destino es exactamente D:/Documentos/GitHub o similar, ajusta para usar una subcarpeta
+      if (/^d:\/documentos\/github$/i.test(destPath.replace(/\\/g, '/'))) {
+        destPath = `${destPath}/${repoName}`;
+        userInput = `Clona el repositorio ${repoName} en ${destPath}`;
+      }
+    }
+
+    const dispatcherPrompt = `Eres un asistente que solo puede responder usando las siguientes tools JSON. Dado el mensaje del usuario, responde únicamente con un JSON de la forma {\n  \"tool\": <nombre_tool>,\n  \"args\": { ...argumentos... }\n}\nNo expliques nada, solo responde el JSON.\nIMPORTANTE: \n- Si el usuario pide crear un archivo, debes usar la tool 'write_file' y pasar correctamente los argumentos 'path' (ruta completa del archivo) y 'content' (contenido, puede ser vacío si el usuario no lo especifica).\n- Si la tool requiere un argumento 'owner' y el usuario no lo especifica, usa siempre 'paulabaal12' como valor por defecto.\nLista de tools disponibles:\n${JSON.stringify(allTools, null, 2)}\n\nMensaje del usuario:\n${userInput}`;
     let dispatcherResponse;
     try {
       dispatcherResponse = await claude.sendMessage(dispatcherPrompt, history);
@@ -76,10 +90,47 @@ async function main() {
           if (mcpClient) {
             try {
               console.log(`[Chatbot]: Ejecutando tool ${toolCall.tool} en ${mcpName}...`);
-              const result = await mcpClient.callTool(toolCall.tool, toolCall.args || {});
+              let result = await mcpClient.callTool(toolCall.tool, toolCall.args || {});
+
+
+              // Automatización: git_set_working_dir tras clonar/crear repo
+              let autoMsg = "";
+              if (["git_clone", "github_clone_repo", "github_create_repo"].includes(toolCall.tool)) {
+                // Determinar ruta del repo
+                let repoPath = toolCall.args?.destPath || toolCall.args?.path || (result?.structuredContent?.path) || (result?.path);
+                if (!repoPath && toolCall.tool === "github_create_repo" && result?.full_name) {
+                  // Si es github_create_repo, intenta deducir la ruta local estándar
+                  repoPath = `D:/Documentos/GitHub/${result.full_name.split('/')[1]}`;
+                }
+                if (repoPath) {
+                  try {
+                    await mcpClient.callTool("git_set_working_dir", { path: repoPath });
+                    autoMsg += `\n\nℹ️  Se configuró automáticamente el directorio de trabajo de git en (${repoPath}).`;
+                    console.log(`[Chatbot]: git_set_working_dir configurado automáticamente en ${repoPath}`);
+                  } catch (e) {
+                    console.log(`[Chatbot]: Error al configurar git_set_working_dir automáticamente: ${e}`);
+                  }
+                }
+              }
+
+              // Automatización: git_add antes de commit y push tras commit
+              if (toolCall.tool === "git_commit") {
+                try {
+                  // git_add antes de commit
+                  await mcpClient.callTool("git_add", {});
+                  autoMsg += `\n\nℹ️  Se realizó automáticamente git add antes del commit.`;
+                  // push tras commit
+                  await mcpClient.callTool("git_push", { remote: "origin", branch: "main" });
+                  autoMsg += `\n\nℹ️  Se realizó automáticamente un push al remoto después del commit.`;
+                  console.log(`[Chatbot]: git add y push automático realizado tras commit.`);
+                } catch (e) {
+                  console.log(`[Chatbot]: Error al hacer git add/push automático: ${e}`);
+                }
+              }
+
               logInteraction('assistant', `[${mcpName}]:\n${JSON.stringify(result, null, 2)}`);
               // Pasa el resultado a Claude para interpretación
-              const prompt = `Interpreta esta respuesta de un MCP para el usuario\n${JSON.stringify(result)}`;
+              const prompt = `Interpreta esta respuesta de un MCP para el usuario\n${JSON.stringify(result)}${autoMsg}`;
               const response = await claude.sendMessage(prompt, history);
               history.push({ role: "user", content: input });
               history.push({ role: "assistant", content: response.content });

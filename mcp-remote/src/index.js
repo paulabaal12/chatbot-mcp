@@ -27,13 +27,13 @@ export default {
 	<body>
 	  <h1>MCP Remote Server</h1>
 	  <p>This is a minimal MCP server that responds to <b>POST</b> requests with a JSON body. It is designed to be used remotely by chatbots or other clients.</p>
-	  <h2>Supported Methods</h2>
-	  <ul>
-		<li><code>get_time</code>: Returns the current time in UTC or a specified timezone.</li>
-		<li><code>lucky_number</code>: Returns a random lucky number between 1 and 100.</li>
-		<li><code>fun_fact</code>: Returns a random fun fact.</li>
-	  </ul>
-	  <p>All requests must be sent as <b>POST</b> with <code>Content-Type: application/json</code>.</p>
+			<h2>Supported Methods</h2>
+			<ul>
+				<li><code>get_time</code>: Returns the current time in UTC or a specified timezone.</li>
+				<li><code>lucky_number</code>: Returns a random lucky number between 1 and 100.</li>
+				<li><code>taylor_lyric</code>: Returns a random lyric and song title from Taylor Swift's discography.</li>
+			</ul>
+			<p>All requests must be sent as <b>POST</b> with <code>Content-Type: application/json</code>.</p>
 	</body>
 	</html>`;
 			return new Response(html, { status: 200, headers: { 'Content-Type': 'text/html' } });
@@ -79,17 +79,21 @@ export default {
 			return new Response(JSON.stringify({ lucky_number: number }), { headers: { 'Content-Type': 'application/json' } });
 		}
 
-		if (req.method === 'fun_fact') {
-			const facts = [
-				"Los flamencos nacen grises, no rosados 🦩",
-				"El corazón de un camarón está en su cabeza 🦐",
-				"Las abejas pueden reconocer rostros humanos 🐝",
-				"Los tiburones existen desde antes que los árboles 🦈🌳",
-				"Un pulpo tiene tres corazones y sangre azul 🐙",
-			];
-			const fact = facts[Math.floor(Math.random() * facts.length)];
-			return new Response(JSON.stringify({ fact }), { headers: { 'Content-Type': 'application/json' } });
-		}
+		   if (req.method === 'taylor_lyric') {
+			   // Importar el array de canciones ya procesado
+			   const { taylorSongs } = await import('./taylor_songs.js');
+			   const pickSong = taylorSongs[Math.floor(Math.random() * taylorSongs.length)];
+			   // lyrics es un string tipo "['line1', 'line2', ...]"
+			   let lyricLines = [];
+			   try {
+				   lyricLines = JSON.parse(pickSong.lyrics.replace(/''/g, '"').replace(/\"/g, '"').replace(/\n/g, ' '));
+			   } catch {
+				   // fallback: intentar extraer líneas entre comillas simples
+				   lyricLines = pickSong.lyrics.match(/'([^']+)'/g)?.map(s => s.slice(1, -1)) || [pickSong.lyrics];
+			   }
+			   const lyric = lyricLines[Math.floor(Math.random() * lyricLines.length)];
+			   return new Response(JSON.stringify({ title: pickSong.title, lyric }), { headers: { 'Content-Type': 'application/json' } });
+		   }
 
 		return new Response(JSON.stringify({ error: 'Unknown method' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
 	},

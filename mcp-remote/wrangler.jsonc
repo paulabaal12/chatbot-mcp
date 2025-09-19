@@ -6,7 +6,7 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "mcp-remote",
 	"main": "src/index.js",
-	"compatibility_date": "2025-09-09",
+	"compatibility_date": "2025-09-19",
 	"observability": {
 		"enabled": true
 	}

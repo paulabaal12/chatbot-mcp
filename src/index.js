@@ -267,11 +267,21 @@ async function main() {
               logInteraction('assistant', `[${mcpName}]:\n${JSON.stringify(result, null, 2)}`);
               // Si hubo autoMsg (por ejemplo, resultado de push), inclúyelo en el resultado para interpretación
               let resultForPrompt = result;
+              let showError = result?.isError === true;
+              // Si autoMsg indica que el commit y el push se realizaron correctamente, no mostrar error aunque isError sea true
               if (autoMsg && typeof result === 'object' && !Array.isArray(result)) {
                 resultForPrompt = { ...result, _autoMsg: autoMsg };
+                if (/Commit realizado correctamente/i.test(autoMsg) && /push.*(realizado correctamente|resultado de push)/i.test(autoMsg)) {
+                  showError = false;
+                }
               }
-              // Pasa el resultado a Claude para interpretación
-              const prompt = `Interpreta esta respuesta de un MCP para el usuario\n${JSON.stringify(resultForPrompt)}${autoMsg}`;
+              // Pasa el resultado a Claude para interpretación, ajustando el mensaje si es solo advertencia
+              let prompt;
+              if (showError) {
+                prompt = `Interpreta esta respuesta de un MCP para el usuario\n${JSON.stringify(resultForPrompt)}${autoMsg}`;
+              } else {
+                prompt = `✅ Operación completada correctamente.\n${autoMsg}`;
+              }
               const response = await claude.sendMessage(prompt, history);
               history.push({ role: "user", content: input });
               history.push({ role: "assistant", content: response.content });

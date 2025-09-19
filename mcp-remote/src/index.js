@@ -60,7 +60,19 @@ export default {
 			return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
 		}
 
-		if (req.method === 'get_time') {
+		   if ((req.method || '').trim().toLowerCase() === 'tools/list') {
+			   // Devuelve la lista de métodos soportados
+			   return new Response(JSON.stringify({
+				   tools: [
+					   { name: 'get_time', description: 'Returns the current time in UTC or a specified timezone.' },
+					   { name: 'lucky_number', description: 'Returns a random lucky number between 1 and 100.' },
+					   { name: 'fun_fact', description: 'Returns a random fun fact.' },
+					   { name: 'taylor_lyric', description: 'Returns a random lyric and song title from Taylor Swift\'s discography.' }
+				   ]
+			   }), { headers: { 'Content-Type': 'application/json' } });
+		   }
+
+		   if (req.method === 'get_time') {
 			try {
 				const date = new Date();
 				const tz = req.params?.tz;

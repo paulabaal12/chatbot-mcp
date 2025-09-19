@@ -1,3 +1,28 @@
+import fetch from "node-fetch";
+// Cliente HTTP para MCP remoto
+export class MCPHttpClient {
+  constructor(url) {
+    this.url = url;
+    this.id = 1;
+  }
+
+  async callTool(name, args = {}) {
+    const payload = { method: name, params: args };
+    const res = await fetch(this.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  }
+
+  async listTools() {
+    return this.callTool("tools/list", {});
+  }
+
+  close() {}
+}
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
@@ -103,11 +128,15 @@ export async function detectShellOption() {
 
 // Crear cliente MCP
 export async function createMCPClient(serverConfig) {
-  const shellOption = await detectShellOption();
-  return new MCPStdioClient(
-    serverConfig.command,
-    serverConfig.args || [],
-    serverConfig.cwd ? { cwd: serverConfig.cwd } : {},
-    shellOption
-  );
+  if (serverConfig.type === "http" && serverConfig.url) {
+    return new MCPHttpClient(serverConfig.url);
+  } else {
+    const shellOption = await detectShellOption();
+    return new MCPStdioClient(
+      serverConfig.command,
+      serverConfig.args || [],
+      serverConfig.cwd ? { cwd: serverConfig.cwd } : {},
+      shellOption
+    );
+  }
 }

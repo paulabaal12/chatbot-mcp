@@ -4018,5 +4018,37 @@
     },
     "annotations": {},
     "mcp": "FilesystemDeleteMCP"
+  },
+  {
+    "name": "get_time",
+    "description": "Returns the current time in UTC or a specified timezone.",
+    "input_schema": {},
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "RemoteMCP"
+  },
+  {
+    "name": "lucky_number",
+    "description": "Returns a random lucky number between 1 and 100.",
+    "input_schema": {},
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "RemoteMCP"
+  },
+  {
+    "name": "fun_fact",
+    "description": "Returns a random fun fact.",
+    "input_schema": {},
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "RemoteMCP"
+  },
+  {
+    "name": "taylor_lyric",
+    "description": "Returns a random lyric and song title from Taylor Swift's discography.",
+    "input_schema": {},
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "RemoteMCP"
   }
 ]

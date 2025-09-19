@@ -32,5 +32,10 @@
     "command": "node",
     "args": ["scripts/mcp_filesystem_delete.js"],
     "cwd": "D:/Documentos/GitHub/chatbot-mcp"
+  },
+  {
+    "name": "RemoteMCP",
+    "type": "http",
+    "url": "https://mcp-remote.paulabarillas.workers.dev"
   }
 ]

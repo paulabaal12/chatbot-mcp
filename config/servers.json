@@ -37,5 +37,15 @@
     "name": "RemoteMCP",
     "type": "http",
     "url": "https://mcp-remote.paulabarillas.workers.dev"
+  },
+  {
+    "name": "TransfermarktMCP",
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "tsx",
+      "D:/Documentos/GitHub/MCP-Chatbot/src/servers/transfermarkt-server/transfermarkt-server.ts"
+    ]
   }
 ]

@@ -4050,5 +4050,134 @@
     "output_schema": {},
     "annotations": {},
     "mcp": "RemoteMCP"
+  },
+  {
+    "name": "get-player-transfers",
+    "description": "Get all transfers of a player",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "playerName": {
+          "type": "string",
+          "description": "Name of the player"
+        }
+      },
+      "required": [
+        "playerName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "TransfermarktMCP"
+  },
+  {
+    "name": "get-player-stats",
+    "description": "Get stats of a player in a given club",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "playerName": {
+          "type": "string"
+        },
+        "clubId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "playerName",
+        "clubId"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "TransfermarktMCP"
+  },
+  {
+    "name": "get-career-path",
+    "description": "Get the clubs and years where a player has played",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "playerName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "playerName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "TransfermarktMCP"
+  },
+  {
+    "name": "get-last-transfer",
+    "description": "Get the most recent transfer of a player",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "playerName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "playerName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "TransfermarktMCP"
+  },
+  {
+    "name": "players-in-clubs",
+    "description": "Find players who have played in ALL the given clubs (with transfer order)",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "clubs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2
+        }
+      },
+      "required": [
+        "clubs"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "TransfermarktMCP"
+  },
+  {
+    "name": "player-career-summary",
+    "description": "Get career summary of a player",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "playerName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "playerName"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "TransfermarktMCP"
   }
 ]

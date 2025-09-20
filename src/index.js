@@ -280,7 +280,7 @@ async function main() {
               if (showError) {
                 prompt = `Interpreta esta respuesta de un MCP para el usuario\n${JSON.stringify(resultForPrompt)}${autoMsg}`;
               } else {
-                prompt = `✅ Operación completada correctamente.\n${autoMsg}`;
+                prompt = `Interpreta esta respuesta exitosa de un MCP para el usuario de forma natural y útil:\n${JSON.stringify(resultForPrompt)}${autoMsg}`;
               }
               const response = await claude.sendMessage(prompt, history);
               history.push({ role: "user", content: input });

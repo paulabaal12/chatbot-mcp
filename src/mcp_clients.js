@@ -31,7 +31,25 @@ export class MCPHttpClient {
   }
 
   async listTools() {
-    return this.callTool("tools/list", {});
+    try {
+      // Para servidores remotos HTTP, usar tools/list directamente
+      const result = await this.callTool("tools/list", {});
+      if (result && result.tools) {
+        return result;
+      }
+    } catch (error) {
+      console.log(`[DEBUG] Error al obtener tools del servidor remoto: ${error.message}`);
+    }
+    
+    // Fallback con las tools conocidas del servidor remoto
+    return {
+      tools: [
+        { name: "get_time", description: "Get current time in UTC or specified timezone" },
+        { name: "lucky_number", description: "Get a random lucky number between 1 and 100" },
+        { name: "fun_fact", description: "Get a random fun fact" },
+        { name: "taylor_lyric", description: "Get a random Taylor Swift lyric and song title" }
+      ]
+    };
   }
 
   close() {}
@@ -92,10 +110,16 @@ export class MCPStdioClient {
   async initialize() {
     if (this.initialized) return;
     await this._send("initialize", {
-      protocolVersion: "2.0",
+      protocolVersion: "2024-11-05",
       capabilities: { tools: {}, resources: {}, prompts: {} },
       clientInfo: { name: "chatbot-mcp", version: "0.1.0" }
     });
+    // Enviar notificación de inicializado
+    this.proc.stdin.write(JSON.stringify({
+      jsonrpc: "2.0",
+      method: "notifications/initialized",
+      params: {}
+    }) + "\n");
     this.initialized = true;
   }
 

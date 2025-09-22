@@ -4179,5 +4179,168 @@
     "output_schema": {},
     "annotations": {},
     "mcp": "TransfermarktMCP"
+  },
+  {
+    "name": "create_user_profile",
+    "description": "Crea un perfil personalizado de usuario con sus hábitos de sueño actuales",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "description": "ID único del usuario"
+        },
+        "name": {
+          "type": "string",
+          "description": "Nombre del usuario"
+        },
+        "age": {
+          "type": "integer",
+          "description": "Edad del usuario"
+        },
+        "chronotype": {
+          "type": "string",
+          "enum": [
+            "morning_lark",
+            "night_owl",
+            "intermediate"
+          ]
+        },
+        "current_bedtime": {
+          "type": "string",
+          "pattern": "^[0-2][0-9]:[0-5][0-9]$"
+        },
+        "current_wake_time": {
+          "type": "string",
+          "pattern": "^[0-2][0-9]:[0-5][0-9]$"
+        },
+        "sleep_duration_hours": {
+          "type": "number",
+          "minimum": 4,
+          "maximum": 12
+        },
+        "goals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "work_schedule": {
+          "type": "string"
+        },
+        "exercise_time": {
+          "type": "string",
+          "description": "Horario de ejercicio opcional"
+        },
+        "screen_time_before_bed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stress_level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "sleep_quality_rating": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        }
+      },
+      "required": [
+        "user_id",
+        "name",
+        "age",
+        "chronotype",
+        "current_bedtime",
+        "current_wake_time",
+        "sleep_duration_hours",
+        "goals",
+        "work_schedule"
+      ]
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "SleepCoachMCP"
+  },
+  {
+    "name": "analyze_sleep_pattern",
+    "description": "Analiza el patrón de sueño actual del usuario y detecta problemas",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "description": "ID del usuario"
+        }
+      },
+      "required": [
+        "user_id"
+      ]
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "SleepCoachMCP"
+  },
+  {
+    "name": "get_personalized_recommendations",
+    "description": "Genera recomendaciones personalizadas basadas en el perfil del usuario",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "description": "ID del usuario"
+        }
+      },
+      "required": [
+        "user_id"
+      ]
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "SleepCoachMCP"
+  },
+  {
+    "name": "create_weekly_schedule",
+    "description": "Crea un horario semanal optimizado con rutinas personalizadas",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "description": "ID del usuario"
+        }
+      },
+      "required": [
+        "user_id"
+      ]
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "SleepCoachMCP"
+  },
+  {
+    "name": "quick_sleep_advice",
+    "description": "Proporciona consejos rápidos basados en una consulta específica",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Consulta específica sobre sueño"
+        },
+        "user_context": {
+          "type": "string",
+          "description": "Contexto adicional del usuario (opcional)"
+        }
+      },
+      "required": [
+        "query"
+      ]
+    },
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "SleepCoachMCP"
   }
 ]

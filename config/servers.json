@@ -3,15 +3,16 @@
     "name": "FilesystemMCP",
     "type": "stdio",
     "command": "npx",
-  "args": ["-y", "@modelcontextprotocol/server-filesystem", "D:/Documentos"],
-    "cwd": "D:/Documentos"},
-    {
-  "name": "GitMCP",
-  "type": "stdio",
-  "command": "npx",
-  "args": ["-y", "@cyanheads/git-mcp-server", "D:/Documentos"],
-  "cwd": "D:/Documentos"
-},
+    "args": ["-y", "@modelcontextprotocol/server-filesystem", "D:/Documentos"],
+    "cwd": "D:/Documentos"
+  },
+  {
+    "name": "GitMCP",
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@cyanheads/git-mcp-server", "D:/Documentos"],
+    "cwd": "D:/Documentos"
+  },
   {
     "name": "GithubMCP",
     "type": "stdio",
@@ -19,9 +20,9 @@
     "args": ["scripts/mcp_github.js"],
     "cwd": "D:/Documentos/GitHub/chatbot-mcp"
   },
-   {
+  {
     "name": "KitchenMCP",
-    "method": "stdio",
+    "type": "stdio",
     "command": "node",
     "args": ["../PROY1-REDES/src/mcp-server.js"],
     "cwd": "D:/Documentos/GitHub/PROY1-REDES"
@@ -47,5 +48,12 @@
       "tsx",
       "D:/Documentos/GitHub/MCP-Chatbot/src/servers/transfermarkt-server/transfermarkt-server.ts"
     ]
+  },
+  {
+    "name": "SleepCoachMCP",
+    "type": "stdio",
+    "command": "python",
+    "args": ["sleep_coach.py"],
+    "cwd": "D:/Documentos/GitHub/SleepCoachServer"
   }
 ]

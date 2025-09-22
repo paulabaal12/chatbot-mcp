@@ -6,7 +6,6 @@ import { ClaudeClient } from "./claude.js";
 import { logInteraction, showLog } from "./log.js";
 import { findToolForQuery } from "./dynamic_query_mapper.js";
 import fs from "fs";
-import { createGithubRepo, deleteGithubRepo } from "../config/github_api.js";
 import { exec, execSync } from "child_process";
 
 // Cargar tools de archivos JSON
@@ -53,13 +52,13 @@ async function main() {
   });
   console.log(""); // Línea en blanco
 
-  // Inicializar MCP clients de forma segura con reintentos
+  // Inicializar MCP clients de forma segura con reintentos por si falla xd
   const results = await Promise.allSettled(servers.map(cfg => createMCPClient(cfg)));
   clients = results
     .filter(r => r.status === "fulfilled")
     .map(r => r.value);
 
-  // Función para reconectar MCPs si es necesario
+  // Función para reconectar MCPs si llegara a desconectarse
   async function reconnectMCP(index) {
     try {
       const newClient = await createMCPClient(servers[index]);
@@ -101,94 +100,94 @@ async function main() {
         }
       }
 
-      // Automatización Git: flujo completo para operaciones Git
-      let autoMsg = "";
-      
-      // Automatización tras git_commit
-      if (toolName === "git_commit") {
-        // 1. Configurar directorio de trabajo
-        let repoPath = null;
-        const repoPhrase = "en D:/Documentos/GitHub/";
-        let idx = userInput.indexOf(repoPhrase);
-        if (idx !== -1) {
-          let start = idx + repoPhrase.length;
-          let end = start;
-          while (end < userInput.length && (userInput[end].match(/[a-zA-Z0-9_-]/))) {
-            end++;
-          }
-          repoPath = `D:/Documentos/GitHub/${userInput.slice(start, end)}`;
-        }
+      // Automatización para operaciones Git que requieren directorio de trabajo
+      if (mcpName.toLowerCase() === 'gitmcp' && 
+          ['git_commit', 'git_push', 'git_add', 'git_status'].includes(toolName)) {
         
-        if (repoPath) {
+        // Verificar si hay error de "No session working directory"
+        const needsWorkingDir = result && (
+          JSON.stringify(result).includes('No session working directory') ||
+          (typeof result === 'string' && result.includes('No session working directory'))
+        );
+        
+        if (needsWorkingDir) {
           try {
-            await mcpClient.callTool("git_set_working_dir", { path: repoPath });
-            autoMsg += `\n📁 Directorio configurado: ${repoPath}`;
-            logInteraction('system', `git_set_working_dir configurado en ${repoPath}`);
+            // Extraer path de los argumentos
+            const workingPath = toolArgs.path;
             
-            // 2. Hacer git_add antes del commit
-            await mcpClient.callTool("git_add", {});
-            autoMsg += `\n➕ Archivos agregados al staging area`;
-            logInteraction('system', `git_add ejecutado automáticamente`);
-            
-            // 3. Volver a intentar el commit
-            result = await mcpClient.callTool(toolName, toolArgs);
-            autoMsg += `\n✅ Commit realizado correctamente`;
-            logInteraction('system', `git_commit completado exitosamente`);
-            
+            if (workingPath) {
+              logInteraction('system', `Configurando directorio de trabajo Git: ${workingPath}`);
+              console.log(`[Git Automatización]: Configurando directorio de trabajo: ${workingPath}`);
+              
+              // Configurar directorio de trabajo
+              await mcpClient.callTool("git_set_working_dir", { path: workingPath });
+              
+              // Si es commit, hacer git_add primero
+              if (toolName === 'git_commit') {
+                await mcpClient.callTool("git_add", { path: workingPath });
+                logInteraction('system', `git_add ejecutado en ${workingPath}`);
+                console.log(`[Git Automatización]: git_add ejecutado en ${workingPath}`);
+              }
+              
+              // Reintentar la operación original
+              result = await mcpClient.callTool(toolName, toolArgs);
+              logInteraction('system', `${toolName} ejecutado exitosamente`);
+              console.log(`[Git Automatización]: ${toolName} ejecutado exitosamente`);
+            }
           } catch (autoError) {
-            autoMsg += `\n⚠️ Error en automatización: ${autoError.message}`;
             logInteraction('system', `Error en automatización Git: ${autoError.message}`);
+            console.log(`[Error Git Automatización]: ${autoError.message}`);
           }
         }
       }
-      
-      // Automatización tras crear repositorio en GitHub
-      if (toolName === "github_create_repo") {
-        if (result?.full_name) {
-          const repoName = result.full_name.split("/")[1];
-          const destPath = `D:/Documentos/GitHub/${repoName}`;
+
+      // Automatización específica para git_commit fallido (mantener como respaldo)
+      if (toolName === "git_commit") {
+        // Detectar error de diferentes formas
+        const hasError = (result && result.error) || 
+                        (typeof result === 'string' && result.toLowerCase().includes('error')) ||
+                        (result && result.message && result.message.toLowerCase().includes('error')) ||
+                        (result && JSON.stringify(result).toLowerCase().includes('error'));
+        
+        if (hasError) {
           try {
-            // Buscar GitMCP para clonar
-            const gitMcpIndex = servers.findIndex(cfg => (cfg.name || '').toLowerCase() === 'gitmcp');
-            const gitMcpClient = gitMcpIndex !== -1 ? clients[gitMcpIndex] : undefined;
-            if (gitMcpClient) {
-              await gitMcpClient.callTool("git_clone", { 
-                repositoryUrl: result.clone_url, 
-                targetPath: destPath 
-              });
-              autoMsg += `\n🔄 Repositorio clonado en ${destPath}`;
+            logInteraction('system', `git_commit falló, intentando git_add automático...`);
+            console.log(`[Automatización]: Detectado error en git_commit, ejecutando git_add...`);
+            
+            // Extraer path de los argumentos del commit original
+            const commitPath = toolArgs.path;
+            
+            if (commitPath) {
+              // Hacer git_add en el directorio específico
+              await mcpClient.callTool("git_add", { path: commitPath });
+              logInteraction('system', `git_add ejecutado en ${commitPath}`);
+              console.log(`[Automatización]: git_add ejecutado en ${commitPath}`);
               
-              await gitMcpClient.callTool("git_set_working_dir", { path: destPath });
-              autoMsg += `\n📁 Directorio de trabajo configurado`;
-              logInteraction('system', `Repositorio ${repoName} clonado y configurado automáticamente`);
+              // Reintentar el commit original
+              result = await mcpClient.callTool(toolName, toolArgs);
+              logInteraction('system', `git_commit reintentado exitosamente`);
+              console.log(`[Automatización]: git_commit reintentado exitosamente`);
+            } else {
+              // Si no hay path específico, intentar git_add general
+              await mcpClient.callTool("git_add", {});
+              logInteraction('system', `git_add ejecutado (general)`);
+              console.log(`[Automatización]: git_add ejecutado (general)`);
+              
+              result = await mcpClient.callTool(toolName, toolArgs);
+              logInteraction('system', `git_commit reintentado exitosamente`);
+              console.log(`[Automatización]: git_commit reintentado exitosamente`);
             }
           } catch (autoError) {
-            autoMsg += `\n⚠️ Error al clonar: ${autoError.message}`;
-            logInteraction('system', `Error en clonación automática: ${autoError.message}`);
+            logInteraction('system', `Error en automatización Git: ${autoError.message}`);
+            console.log(`[Error Automatización]: ${autoError.message}`);
           }
         }
       }
 
       logInteraction('assistant', `[${mcpName}]:\n${JSON.stringify(result, null, 2)}`);
       
-      // Preparar resultado para interpretación
-      let resultForPrompt = result;
-      let showError = result?.isError === true;
-      if (autoMsg && typeof result === 'object' && !Array.isArray(result)) {
-        resultForPrompt = { ...result, _autoMsg: autoMsg };
-        if (/Commit realizado correctamente/i.test(autoMsg) && /push.*(realizado correctamente|resultado de push)/i.test(autoMsg)) {
-          showError = false;
-        }
-      }
-      
-      // Usar el nuevo método especializado de Claude
-      let response;
-      if (showError) {
-        const prompt = `Interpreta esta respuesta de error de un MCP para el usuario\n${JSON.stringify(resultForPrompt)}${autoMsg}`;
-        response = await claude.sendMessage(prompt, history, 1000);
-      } else {
-        response = await claude.interpretMCPResponse(toolName, mcpName, resultForPrompt, userInput);
-      }
+      // Usar el método especializado de Claude para interpretar respuestas
+      const response = await claude.interpretMCPResponse(toolName, mcpName, result, userInput);
       
       history.push({ role: "user", content: userInput });
       history.push({ role: "assistant", content: response.content });
@@ -247,37 +246,6 @@ async function main() {
       showLog();
       rl.prompt();
       return;
-    }
-
-    // Preprocesamiento de input para casos especiales de Git
-    let userInput = input;
-    
-    // Preprocesamiento de input
-    const cloneMatch = input.match(/clona el repositorio ([^ ]+) en ([^\n]+)/i);
-    if (cloneMatch) {
-      const repoName = cloneMatch[1].trim();
-      let destPath = cloneMatch[2].replace(/\\/g, '/').trim();
-      if (destPath.endsWith('/')) destPath = destPath.slice(0, -1);
-      if (/^d:\/documentos\/github$/i.test(destPath.replace(/\\/g, '/'))) {
-        destPath = `${destPath}/${repoName}`;
-        userInput = `Clona el repositorio ${repoName} en ${destPath}`;
-      }
-    }
-
-    // Reemplazar 'en el repositorio <nombre>' por la ruta local
-    const repoPhrase = "en el repositorio ";
-    let idx = userInput.toLowerCase().indexOf(repoPhrase);
-    while (idx !== -1) {
-      const start = idx + repoPhrase.length;
-      let end = start;
-      while (end < userInput.length && (userInput[end].match(/[a-zA-Z0-9_-]/))) {
-        end++;
-      }
-      const repoName = userInput.slice(start, end);
-      if (repoName) {
-        userInput = userInput.slice(0, idx) + `en D:/Documentos/GitHub/${repoName}` + userInput.slice(end);
-      }
-      idx = userInput.toLowerCase().indexOf(repoPhrase, idx + 1);
     }
 
     // Sistema dinámico: Claude analiza all_tools.json automáticamente

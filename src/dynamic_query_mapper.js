@@ -48,19 +48,26 @@ ${JSON.stringify(toolsSummary, null, 1)}
 
 REGLAS DE SELECCIÓN:
 - "crea un archivo [nombre]" → usar "write_file" (NO create_directory)
-- "crea un repositorio" → usar "github_create_repo" para GitHub o "git_init" para local
+- "crea repositorio [nombre]" → usar "github_create_repo" para GitHub (SIEMPRE GitHub por defecto)
+- "crea un repositorio [nombre]" → usar "github_create_repo" para GitHub
 - "clona el repositorio [nombre]" → usar "git_clone" 
 - "crea una carpeta/directorio" → usar "create_directory"
-- "lee/lee archivo" → usar "read_file" 
+- "lee/lee archivo [path específico]" → usar "read_file" 
 - "commit/hacer commit" → usar "git_commit"
-- "push" → usar "git_push"
+- "push" o "haz push" → usar "git_push"
 - "receta con [ingrediente]" → usar "get_recipes_by_ingredients"
 - "receta [dieta]" → usar "suggest_recipe_by_diet"
 - "calorías/nutrición" → usar "get_food_by_name"
 - "taylor swift" → usar "taylor_lyric"
-- "tiempo/hora" → usar "get_time"
+- "¿qué hora es ahora?" o "hora actual" o "tiempo actual" → usar "get_time"
 
 IMPORTANTE: 
+- Para PREGUNTAS GENERALES (ej: "¿Quién fue X?", "¿Qué es Y?", "Explica Z") → NO usar herramientas (retornar null)
+- Para PREGUNTAS DE SEGUIMIENTO sobre personas (ej: "¿En qué fecha nació?", "¿Dónde nació?", "¿Cuándo murió?", "¿cuándo nació?") → NO usar herramientas (retornar null)
+- Para FECHAS HISTÓRICAS de personas → NO usar herramientas (retornar null)
+- Solo usar "get_time" para HORA/FECHA ACTUAL DEL SISTEMA, NO para fechas históricas de personas
+- Para "crea repositorio" SIN especificar "local" → SIEMPRE usar "github_create_repo"
+- Solo usar herramientas para ACCIONES ESPECÍFICAS (crear, leer archivos, git, recetas específicas)
 - Para crear ARCHIVOS usa "write_file", NO "create_directory"
 - Para crear CARPETAS usa "create_directory"
 - Para GitHub usa herramientas de "GithubMCP"
@@ -157,7 +164,9 @@ EJEMPLOS POR HERRAMIENTA:
 - read_file: "lee archivo test.txt" → {"path": "test.txt"}
 - git_commit: "haz commit con mensaje 'Initial commit'" → {"message": "Initial commit"}
 - git_commit: "haz commit en D:/Documentos/GitHub/test-demo con mensaje 'Add README'" → {"message": "Add README", "path": "D:/Documentos/GitHub/test-demo"}
+- git_push: "haz push en D:/Documentos/GitHub/test-demo" → {"path": "D:/Documentos/GitHub/test-demo"}
 - github_create_repo: "crea repositorio prueba12" → {"repoName": "prueba12"}
+- github_create_repo: "crea repositorio testt" → {"repoName": "testt"}
 - get_recipes_by_ingredients: "recipe with cheese" → {"ingredients": ["cheese"]}
 - get_food_by_name: "calories apple" → {"name": "apple"}
 - suggest_recipe_by_diet: "vegan recipe" → {"diet_type": "vegan"}
@@ -166,6 +175,7 @@ REGLAS ESPECIALES:
 - Para git_clone: siempre usar owner "paulabaal12" y targetPath en "D:/Documentos/GitHub/[nombre_repo]"
 - Para write_file: si no hay contenido específico, usar content: ""
 - Para git_commit: extraer path del directorio mencionado (ej: "en D:/Documentos/GitHub/test-demo")
+- Para git_push: extraer path del directorio mencionado (ej: "en D:/Documentos/GitHub/test-demo")
 - Para github_create_repo: usar "repoName" no "name"
 - Para rutas: usar rutas absolutas cuando sea posible
 

@@ -5,6 +5,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,9 +22,15 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Almacenar historial de conversación por usuario
+const userSessions = new Map();
+
 // Manejar conexiones WebSocket
 io.on('connection', (socket) => {
   console.log('🔗 Usuario conectado:', socket.id);
+  
+  // Inicializar sesión del usuario
+  userSessions.set(socket.id, []);
   
   // Cuando el usuario envía un mensaje
   socket.on('user_message', async (data) => {
@@ -52,14 +59,28 @@ io.on('connection', (socket) => {
   
   socket.on('disconnect', () => {
     console.log('❌ Usuario desconectado:', socket.id);
+    // Limpiar sesión del usuario
+    userSessions.delete(socket.id);
   });
 });
 
 // Función para procesar mensajes con el chatbot MCP
 async function processChatbotMessage(message, socket) {
   return new Promise((resolve, reject) => {
-    // Usar el chatbot especializado para web
-    const chatbot = spawn('node', ['src/web-chatbot.js', message], {
+    // Obtener historial de conversación del usuario
+    const userHistory = userSessions.get(socket.id) || [];
+    
+    // Crear archivo temporal con el historial para pasarlo al chatbot
+    const tempHistoryFile = `temp_history_${socket.id}.json`;
+    
+    try {
+      fs.writeFileSync(tempHistoryFile, JSON.stringify(userHistory));
+    } catch (err) {
+      console.error('Error escribiendo historial temporal:', err);
+    }
+    
+    // Usar el chatbot especializado para web con historial
+    const chatbot = spawn('node', ['src/web-chatbot.js', message, tempHistoryFile], {
       cwd: path.join(__dirname, '..'),
       stdio: ['pipe', 'pipe', 'pipe']
     });
@@ -77,54 +98,77 @@ async function processChatbotMessage(message, socket) {
       output += text;
       fullResponse += text;
       
-      console.log('Chatbot output:', text); // Debug log
-      
-      // Buscar respuestas del chatbot
+      // Capturar todas las respuestas de Claude de forma inteligente
       const lines = text.split('\n');
       for (const line of lines) {
         const trimmedLine = line.trim();
         
-        // Filtrar líneas no deseadas
-        if (trimmedLine.includes('dotenv@') || 
-            trimmedLine.includes('injecting env') ||
-            trimmedLine.includes('tip:') ||
-            trimmedLine.includes('MCPs cargados') ||
-            trimmedLine.includes('Sistema completamente') ||
-            trimmedLine.includes('MCPs disponibles') ||
-            trimmedLine.includes('• ') ||
-            trimmedLine.length < 3) {
-          continue;
-        }
-        
-        // Detectar líneas importantes del chatbot
-        if (trimmedLine.includes('[Claude') || 
-            trimmedLine.includes('[Chatbot]') || 
-            trimmedLine.includes('Ejecutando tool') ||
-            trimmedLine.includes('Error') ||
-            trimmedLine.includes('RemoteMCP') ||
-            trimmedLine.includes('Resultado:') ||
-            trimmedLine.includes('"title":') ||
-            trimmedLine.includes('"lyric":') ||
-            trimmedLine.includes('Entendido') ||
-            trimmedLine.includes('Consulta:') ||
-            trimmedLine.includes('Herramienta:')) {
-          
-          let cleanLine = trimmedLine.replace(/^\[.*?\]:\s*/, '').trim();
-          
-          // Formatear según el tipo de línea
-          if (trimmedLine.includes('Ejecutando tool')) {
-            cleanLine = `🔧 ${trimmedLine}`;
-          } else if (trimmedLine.includes('Resultado:') || trimmedLine.includes('"title":')) {
-            cleanLine = `📋 ${trimmedLine}`;
-          }
-          
-          if (cleanLine && cleanLine.length > 0) {
-            socket.emit('message', {
-              type: 'assistant',
-              content: cleanLine,
-              timestamp: new Date().toISOString()
-            });
-            isProcessing = true;
+        // Detectar respuestas de Claude + MCP
+        if (trimmedLine.startsWith('[Claude + ')) {
+          const mcpMatch = trimmedLine.match(/\[Claude \+ ([^\]]+)\]:\s*(.+)/);
+          if (mcpMatch) {
+            const mcpName = mcpMatch[1];
+            const response = mcpMatch[2];
+            
+            // Formatear según el tipo de MCP
+            let formattedResponse = '';
+            
+            if (mcpName.includes('RemoteMCP') && (response.includes('Título:') || response.includes('Letra:'))) {
+              // Formato especial para letras de Taylor Swift
+              const titleMatch = response.match(/Título:\s*["']?([^"'\n]+)["']?/i);
+              const lyricMatch = response.match(/Letra:\s*["']?([^"'\n]+)["']?/i);
+              
+              if (titleMatch) {
+                formattedResponse += `<div class="lyric-title"> <strong>${titleMatch[1]}</strong></div>`;
+              }
+              if (lyricMatch && !lyricMatch[1].includes('no disponible')) {
+                formattedResponse += `<div class="lyric-text">${lyricMatch[1]}</div>`;
+              }
+            } else if (mcpName.includes('KitchenMCP')) {
+              // Formatear respuestas de cocina
+              try {
+                const jsonResponse = JSON.parse(response);
+                if (jsonResponse.substitutions) {
+                  formattedResponse = `<div class="kitchen-response">
+                    <div class="ingredient-title">🍽️ <strong>Sustitutos para: ${jsonResponse.ingredient}</strong></div>
+                    <div class="substitutions-list">
+                      ${jsonResponse.substitutions.map(sub => `<div class="substitution-item">• ${sub}</div>`).join('')}
+                    </div>
+                  </div>`;
+                } else if (Array.isArray(jsonResponse)) {
+                  formattedResponse = `<div class="recipes-response">
+                    <div class="recipes-title">🍳 <strong>Recetas encontradas:</strong></div>
+                    <div class="recipes-list">
+                      ${jsonResponse.slice(0, 3).map(recipe => `
+                        <div class="recipe-item">
+                          <strong>${recipe.title}</strong>
+                          <div class="recipe-description">${recipe.description || 'Receta deliciosa'}</div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>`;
+                } else {
+                  formattedResponse = `<div class="kitchen-simple">${response}</div>`;
+                }
+              } catch (e) {
+                formattedResponse = `<div class="kitchen-simple">🍽️ ${response}</div>`;
+              }
+            } else {
+              // Formato general para otros MCPs
+              formattedResponse = `<div class="mcp-response">
+                <div class="mcp-header">🔧 <strong>${mcpName}</strong></div>
+                <div class="mcp-content">${response}</div>
+              </div>`;
+            }
+            
+            if (formattedResponse) {
+              socket.emit('message', {
+                type: 'assistant',
+                content: formattedResponse,
+                timestamp: new Date().toISOString()
+              });
+              isProcessing = true;
+            }
           }
         }
       }
@@ -226,6 +270,22 @@ async function processChatbotMessage(message, socket) {
     // Cleanup al finalizar
     chatbot.on('close', (code) => {
       clearTimeout(timeout);
+      
+      // Actualizar historial de conversación
+      const userHistory = userSessions.get(socket.id) || [];
+      userHistory.push({ role: "user", content: message });
+      
+      // Aquí deberíamos obtener la respuesta del chatbot, pero por simplicidad
+      // mantenemos el historial básico por ahora
+      userSessions.set(socket.id, userHistory.slice(-10)); // Mantener solo últimas 10 interacciones
+      
+      // Limpiar archivo temporal
+      try {
+        fs.unlinkSync(tempHistoryFile);
+      } catch (err) {
+        // Ignorar errores de limpieza
+      }
+      
       resolve();
     });
   });

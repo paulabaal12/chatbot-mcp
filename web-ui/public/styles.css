@@ -1,3 +1,146 @@
+/* Estilos para respuestas de letras de canciones */
+.lyric-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--primary-blue-dark);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.lyric-title strong {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.lyric-title::before {
+  content: "\1F3B5 "; /* 🎵 */
+  font-size: 1.2em;
+  margin-right: 0.3em;
+}
+.lyric-text {
+  font-size: 1.05rem;
+  color: var(--accent-purple-dark);
+  background: var(--cool-gray-100);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.2rem;
+  margin-top: 0.2rem;
+  box-shadow: var(--shadow-sm);
+  font-style: italic;
+  word-break: break-word;
+}
+
+/* Estilos para respuestas de cocina */
+.kitchen-response {
+  background: var(--cool-gray-50);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  border-left: 4px solid var(--secondary-teal);
+}
+
+.ingredient-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--secondary-teal-dark);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.substitutions-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.substitution-item {
+  background: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  color: var(--cool-gray-700);
+  box-shadow: var(--shadow-sm);
+  border-left: 3px solid var(--secondary-teal-light);
+}
+
+.recipes-response {
+  background: var(--cool-gray-50);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  border-left: 4px solid var(--accent-purple);
+}
+
+.recipes-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--accent-purple-dark);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.recipes-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.recipe-item {
+  background: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  border-left: 3px solid var(--accent-purple-light);
+}
+
+.recipe-item strong {
+  color: var(--accent-purple-dark);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.recipe-description {
+  color: var(--cool-gray-600);
+  font-size: 0.9rem;
+}
+
+.kitchen-simple {
+  background: var(--cool-gray-100);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  color: var(--cool-gray-700);
+  border-left: 3px solid var(--secondary-teal);
+}
+
+/* Estilos para respuestas generales de MCP */
+.mcp-response {
+  background: var(--cool-gray-50);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  border-left: 4px solid var(--primary-blue);
+}
+
+.mcp-header {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-blue-dark);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mcp-content {
+  color: var(--cool-gray-700);
+  line-height: 1.5;
+  background: white;
+  padding: 0.75rem;
+  border-radius: 6px;
+  box-shadow: var(--shadow-sm);
+}
 /* Modern Cool Color Palette CSS for MCP Chatbot */
 :root {
   /* Cool Color Palette */

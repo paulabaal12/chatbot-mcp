@@ -250,7 +250,7 @@ async function main() {
 
     // Sistema dinámico: Claude analiza all_tools.json automáticamente
     try {
-      const autoMapping = await findToolForQuery(input, claude);
+      const autoMapping = await findToolForQuery(input, claude, history);
       
       if (autoMapping) {
         const { tool, mcp, args } = autoMapping;
@@ -280,9 +280,10 @@ async function main() {
 
     // Interacción normal con Claude si no se encontró mapeo
     try {
+      // Usar el historial completo para mantener contexto en la conversación
       const response = await claude.sendMessage(input, history);
       history.push({ role: "user", content: input });
-      history.push({ role: "assistant", content: response.content });
+      history.push({ role: "assistant", content: response.content[0]?.text || "(sin respuesta)" });
       logInteraction('user', input);
       logInteraction('assistant', response.content[0]?.text || "(sin respuesta)");
       console.log("[Claude]:", response.content[0]?.text || "(sin respuesta)");

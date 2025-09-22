@@ -46,7 +46,7 @@ async function initializeIfNeeded() {
   }
 }
 
-async function processWebMessage(input) {
+async function processWebMessage(input, conversationHistory = []) {
   console.log(`🔄 Procesando: "${input}"`);
   
   try {
@@ -134,7 +134,7 @@ async function processWebMessage(input) {
 
     // Sistema dinámico: Claude analiza all_tools.json automáticamente
     console.log(`🔍 Buscando herramienta para: "${input}"`);
-    const autoMapping = await findToolForQuery(input, claude);
+    const autoMapping = await findToolForQuery(input, claude, conversationHistory);
     
     if (autoMapping) {
       const { tool, mcp, args } = autoMapping;
@@ -157,8 +157,8 @@ async function processWebMessage(input) {
     }
 
     console.log(`🤖 Usando Claude para: "${input}"`);
-    // Interacción normal con Claude si no se encontró mapeo
-    const response = await claude.sendMessage(input, []);
+    // Interacción normal con Claude si no se encontró mapeo - usar historial para contexto
+    const response = await claude.sendMessage(input, conversationHistory);
     logInteraction('user', input);
     logInteraction('assistant', response.content[0]?.text || "(sin respuesta)");
     console.log("[Claude]:", response.content[0]?.text || "(sin respuesta)");
@@ -171,8 +171,20 @@ async function processWebMessage(input) {
 
 // Si se ejecuta como script principal
 if (process.argv[2]) {
-  const message = process.argv.slice(2).join(' ');
-  processWebMessage(message).then(() => {
+  const message = process.argv.slice(2, 3)[0]; // Solo el primer argumento es el mensaje
+  const historyFile = process.argv[3]; // El segundo argumento es el archivo de historial
+  
+  let conversationHistory = [];
+  if (historyFile) {
+    try {
+      const historyData = fs.readFileSync(historyFile, 'utf8');
+      conversationHistory = JSON.parse(historyData);
+    } catch (err) {
+      console.warn('No se pudo cargar historial de conversación:', err.message);
+    }
+  }
+  
+  processWebMessage(message, conversationHistory).then(() => {
     process.exit(0);
   }).catch(err => {
     console.error("[Error]:", err);

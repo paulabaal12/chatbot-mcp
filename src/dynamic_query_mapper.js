@@ -24,7 +24,7 @@ function loadAllTools() {
 /**
  * Encuentra la herramienta más apropiada usando Claude para análisis semántico dinámico
  */
-export async function findToolForQuery(query, claudeClient) {
+export async function findToolForQuery(query, claudeClient, conversationHistory = []) {
     // Log detallado solo en session cuando sea necesario
     
     if (allTools.length === 0) {
@@ -39,9 +39,14 @@ export async function findToolForQuery(query, claudeClient) {
         params: tool.input_schema?.required || []
     }));
     
+    // Extraer contexto reciente de la conversación
+    const recentHistory = conversationHistory.slice(-4); // Solo las últimas 2 interacciones
+    const contextText = recentHistory.length > 0 ? 
+        `\nCONTEXTO DE CONVERSACIÓN RECIENTE:\n${recentHistory.map(msg => `${msg.role}: ${msg.content}`).join('\n')}\n` : '';
+    
     const prompt = `Analiza esta consulta y selecciona la herramienta MAS APROPIADA:
 
-CONSULTA: "${query}"
+CONSULTA: "${query}"${contextText}
 
 HERRAMIENTAS DISPONIBLES:
 ${JSON.stringify(toolsSummary, null, 1)}
@@ -63,9 +68,10 @@ REGLAS DE SELECCIÓN:
 
 IMPORTANTE: 
 - Para PREGUNTAS GENERALES (ej: "¿Quién fue X?", "¿Qué es Y?", "Explica Z") → NO usar herramientas (retornar null)
-- Para PREGUNTAS DE SEGUIMIENTO sobre personas (ej: "¿En qué fecha nació?", "¿Dónde nació?", "¿Cuándo murió?", "¿cuándo nació?") → NO usar herramientas (retornar null)
+- Para PREGUNTAS DE SEGUIMIENTO sobre personas (ej: "¿En qué fecha nació?", "¿Dónde nació?", "¿Cuándo murió?", "¿cuándo nació?", "cuando nació", "when was he born") → NO usar herramientas (retornar null)
 - Para FECHAS HISTÓRICAS de personas → NO usar herramientas (retornar null)
 - Solo usar "get_time" para HORA/FECHA ACTUAL DEL SISTEMA, NO para fechas históricas de personas
+- Si el CONTEXTO menciona una persona específica y la consulta es sobre fechas/biografía → NO usar herramientas (retornar null)
 - Para "crea repositorio" SIN especificar "local" → SIEMPRE usar "github_create_repo"
 - Solo usar herramientas para ACCIONES ESPECÍFICAS (crear, leer archivos, git, recetas específicas)
 - Para crear ARCHIVOS usa "write_file", NO "create_directory"

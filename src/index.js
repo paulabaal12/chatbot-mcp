@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config({ path: "./config/.env" });
 import readline from "readline";
+import chalk from "chalk";
 import { loadServersConfig, createMCPClient } from "./mcp_clients.js";
 import { ClaudeClient } from "./claude.js";
 import { logInteraction, showLog } from "./log.js";
@@ -17,6 +18,7 @@ try {
 }
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+rl.setPrompt(chalk.bold.cyan("🤖 [Chatbot] > "));
 const apiKey = process.env.CLAUDE_API_KEY;
 const claude = new ClaudeClient(apiKey);
 
@@ -33,22 +35,21 @@ async function main() {
     // Silent fail - not critical
   }
 
-  // Mostrar resumen de MCPs disponibles
-  console.log("🤖 Chatbot MCP con Sistema Dinámico");
+  // Mostrar resumen de MCPs disponibles con colores bonitos
+  console.log(chalk.bold.cyan("🤖 Chatbot MCP con Sistema Dinámico"));
   const mcpToolCounts = servers.map(cfg => {
     const name = cfg.name || "";
     return allTools.filter(t => (t.mcp || "").toLowerCase() === name.toLowerCase()).length;
   });
   const totalTools = mcpToolCounts.reduce((sum, count) => sum + count, 0);
-  console.log(`📦 ${servers.length} MCPs cargados con ${totalTools} herramientas disponibles`);
-  console.log("✨ Sistema completamente dinámico activado\n");
+  console.log(chalk.green(`📦 ${servers.length} MCPs cargados con ${chalk.bold(totalTools)} herramientas disponibles`));
   
-  // Mostrar detalle de MCPs disponibles
-  console.log("MCPs disponibles:");
+  // Mostrar detalle de MCPs disponibles con colores
+  console.log(chalk.bold.blue("🔧 MCPs disponibles:"));
   servers.forEach((cfg, i) => {
     const name = cfg.name || `MCP ${i+1}`;
     const count = mcpToolCounts[i];
-    console.log(`• ${name}: ${count} tools`);
+    console.log(chalk.cyan(`  • ${name}: ${chalk.bold.white(count)} tools`));
   });
   console.log(""); // Línea en blanco
 
@@ -74,8 +75,8 @@ async function main() {
   // Función auxiliar para ejecutar herramientas MCP
   async function executeMCPTool(mcpClient, mcpName, mcpIndex, toolName, toolArgs, userInput) {
     try {
-      // Mostrar indicador de ejecución en consola
-      console.log(`[Chatbot]: Ejecutando tool ${toolName} en ${mcpName}...`);
+      // Mostrar indicador de ejecución en consola con colores
+      console.log(chalk.cyan(`🔧 [Chatbot]: Ejecutando tool ${chalk.bold.white(toolName)} en ${chalk.bold.magenta(mcpName)}...`));
       
       // Log detallado solo a session.log
       logInteraction('system', `Ejecutando tool ${toolName} en ${mcpName}...`);
@@ -194,8 +195,54 @@ async function main() {
       logInteraction('user', userInput);
       logInteraction('assistant', response.content[0]?.text || "(sin respuesta)");
       
-      // Mostrar en consola con formato limpio
-      console.log(`[Claude + ${mcpName}]: ${response.content[0]?.text || "(sin respuesta)"}`);
+      // Mostrar en consola con formato bonito y colores
+      const responseText = response.content[0]?.text || "(sin respuesta)";
+      
+      // Formatear según el tipo de respuesta para mayor belleza visual
+      if (responseText.includes('Title:') && responseText.includes('Lyric:')) {
+        // Formato para Taylor Swift - solo emojis con color, texto en blanco
+        const lines = responseText.split('\n');
+        lines.forEach(line => {
+          if (line.startsWith('Title:')) {
+            console.log(`🎵 ${line}`);
+          } else if (line.startsWith('Lyric:')) {
+            console.log(`📝 ${line}`);
+          }
+        });
+      } else if (mcpName.includes('Kitchen')) {
+        if (responseText.includes('Sustitutos para')) {
+          const lines = responseText.split('\n');
+          lines.forEach((line, index) => {
+            if (index === 0) {
+              console.log(chalk.bold.green(`${line}`));
+            } else if (line.startsWith('•')) {
+              console.log(chalk.cyan(`   ${line}`));
+            }
+          });
+        } else if (responseText.includes('Recetas encontradas:') || responseText.includes('Recetas para tu dieta:')) {
+          const lines = responseText.split('\n');
+          lines.forEach(line => {
+            if (line.includes('Recetas')) {
+              console.log(chalk.bold.green(`${line}`));
+            } else if (line.startsWith('') || line.startsWith('🥗')) {
+              console.log(chalk.bold.white(line));
+            } else if (line.startsWith('   ')) {
+              console.log(chalk.gray(line));
+            }
+          });
+        } else {
+          console.log(`🍳 [${mcpName}]: ${responseText}`);
+        }
+      } else if (mcpName.includes('Git')) {
+        // Formato para Git
+        console.log(`📂 [${mcpName}]: ${responseText}`);
+      } else if (mcpName.includes('Remote')) {
+        // Formato para Remote (Taylor Swift, tiempo, etc.)
+        console.log(`🌐 [${mcpName}]: ${responseText}`);
+      } else {
+        // Formato general
+        console.log(`🤖 [${mcpName}]: ${responseText}`);
+      }
       
     } catch (err) {
       let msg;
@@ -209,7 +256,7 @@ async function main() {
         // Log detallado del error
         logInteraction('system', `Error completo: ${JSON.stringify(err, null, 2)}`);
       }
-      console.log(`[Error]: ${msg}`);
+      console.log(`❌ [Error]: ${msg}`);
       logInteraction('assistant', msg);
     }
     rl.prompt();
@@ -238,11 +285,13 @@ async function main() {
   rl.on("line", async (line) => {
     const input = line.trim();
     if (input.toLowerCase() === "exit") {
+      console.log(chalk.yellow("👋 ¡Hasta luego! Cerrando chatbot MCP..."));
       rl.close();
       clients.forEach(c => c.close());
       process.exit(0);
     }
     if (input.toLowerCase() === "log" || input.toLowerCase() === "historial") {
+      console.log(chalk.blue("📜 Mostrando historial de conversación:"));
       showLog();
       rl.prompt();
       return;
@@ -286,16 +335,19 @@ async function main() {
       history.push({ role: "assistant", content: response.content[0]?.text || "(sin respuesta)" });
       logInteraction('user', input);
       logInteraction('assistant', response.content[0]?.text || "(sin respuesta)");
-      console.log("[Claude]:", response.content[0]?.text || "(sin respuesta)");
+      console.log(`🧠 [Claude]: ${response.content[0]?.text || "(sin respuesta)"}`);
       rl.prompt();
     } catch (err) {
-      console.error("[Claude]: Error al comunicarse con Claude:", err);
+      console.error(`❌ [Claude]: Error al comunicarse con Claude: ${err}`);
       logInteraction('user', input);
       logInteraction('assistant', `Error al comunicarse con Claude: ${err}`);
       rl.prompt();
     }
   });
   
+  // Mensaje de bienvenida final
+  console.log(chalk.bold.green("🎉 ¡Chatbot MCP listo! Escribe tu consulta o 'exit' para salir."));
+  console.log(chalk.gray("💡 Comandos especiales: 'log' para ver historial, 'exit' para salir\n"));
   rl.prompt();
 }
 

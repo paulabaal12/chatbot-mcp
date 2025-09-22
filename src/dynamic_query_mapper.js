@@ -31,6 +31,12 @@ export async function findToolForQuery(query, claudeClient, conversationHistory 
         loadAllTools();
     }
     
+    // Filtro temprano: detectar preguntas sobre personas
+    const personalQuestions = /^(quien es|quién es|who is|cuando nació|cuándo nació|when was.*born|donde nació|dónde nació|where was.*born|cuando murió|cuándo murió|when did.*die)/i;
+    if (personalQuestions.test(query.trim())) {
+        return null; // No usar herramientas para preguntas sobre personas
+    }
+    
     // Crear un resumen compacto de herramientas para Claude
     const toolsSummary = allTools.map(tool => ({
         name: tool.name,
@@ -51,6 +57,20 @@ CONSULTA: "${query}"${contextText}
 HERRAMIENTAS DISPONIBLES:
 ${JSON.stringify(toolsSummary, null, 1)}
 
+REGLAS CRÍTICAS - NO USAR HERRAMIENTAS PARA:
+❌ Preguntas sobre personas famosas: "quien es charles leclerc", "quien es alan turing"
+❌ Fechas de nacimiento/muerte: "cuando nació", "cuando murió"  
+❌ Biografías e información general de personas
+❌ Preguntas de seguimiento biográficas
+❌ Fechas históricas (solo usar get_time para hora actual del sistema)
+
+USAR HERRAMIENTAS SOLO PARA:
+✅ Crear/leer archivos específicos
+✅ Operaciones Git/GitHub específicas  
+✅ Recetas con ingredientes específicos
+✅ Taylor Swift lyrics (solo "taylor swift")
+✅ Hora actual del sistema
+
 REGLAS DE SELECCIÓN:
 - "crea un archivo [nombre]" → usar "write_file" (NO create_directory)
 - "crea repositorio [nombre]" → usar "github_create_repo" para GitHub (SIEMPRE GitHub por defecto)
@@ -67,11 +87,19 @@ REGLAS DE SELECCIÓN:
 - "¿qué hora es ahora?" o "hora actual" o "tiempo actual" → usar "get_time"
 
 IMPORTANTE: 
-- Para PREGUNTAS GENERALES (ej: "¿Quién fue X?", "¿Qué es Y?", "Explica Z") → NO usar herramientas (retornar null)
-- Para PREGUNTAS DE SEGUIMIENTO sobre personas (ej: "¿En qué fecha nació?", "¿Dónde nació?", "¿Cuándo murió?", "¿cuándo nació?", "cuando nació", "when was he born") → NO usar herramientas (retornar null)
+- Para PREGUNTAS GENERALES → NO usar herramientas (retornar null):
+  * "¿Quién es X?", "¿Quién fue X?", "quien es X", "quien fue X"
+  * "¿Qué es Y?", "que es Y", "explica Y"
+  * "¿Cuándo nació X?", "cuando nació X", "when was X born"
+  * "¿Dónde nació X?", "donde nació X"
+  * "¿Cuándo murió X?", "cuando murió X"
+  * Biografías, fechas históricas, información general de personas
+- Para PREGUNTAS DE SEGUIMIENTO sobre personas → NO usar herramientas (retornar null):
+  * "¿En qué fecha nació?", "¿Dónde nació?", "¿Cuándo murió?"
+  * "cuando nació", "where was he born", "when did he die"
 - Para FECHAS HISTÓRICAS de personas → NO usar herramientas (retornar null)
-- Solo usar "get_time" para HORA/FECHA ACTUAL DEL SISTEMA, NO para fechas históricas de personas
-- Si el CONTEXTO menciona una persona específica y la consulta es sobre fechas/biografía → NO usar herramientas (retornar null)
+- Solo usar "get_time" para HORA/FECHA ACTUAL DEL SISTEMA, NO para fechas históricas
+- Si menciona nombres de personas famosas (atletas, científicos, etc.) → NO usar herramientas (retornar null)
 - Para "crea repositorio" SIN especificar "local" → SIEMPRE usar "github_create_repo"
 - Solo usar herramientas para ACCIONES ESPECÍFICAS (crear, leer archivos, git, recetas específicas)
 - Para crear ARCHIVOS usa "write_file", NO "create_directory"
@@ -175,7 +203,10 @@ EJEMPLOS POR HERRAMIENTA:
 - github_create_repo: "crea repositorio testt" → {"repoName": "testt"}
 - get_recipes_by_ingredients: "recipe with cheese" → {"ingredients": ["cheese"]}
 - get_food_by_name: "calories apple" → {"name": "apple"}
-- suggest_recipe_by_diet: "vegan recipe" → {"diet_type": "vegan"}
+- suggest_recipe_by_diet: "vegan recipe" → {"diet": "vegan"}
+- suggest_recipe_by_diet: "keto recipe" → {"diet": "keto"}
+- suggest_ingredient_substitution: "substitute rice" → {"ingredient": "rice"}
+- get_recipes_by_ingredients: "recipe with apple, sugar" → {"ingredients": ["apple", "sugar"]}
 
 REGLAS ESPECIALES:
 - Para git_clone: siempre usar owner "paulabaal12" y targetPath en "D:/Documentos/GitHub/[nombre_repo]"

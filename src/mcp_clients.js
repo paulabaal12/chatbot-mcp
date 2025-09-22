@@ -7,14 +7,27 @@ export class MCPHttpClient {
   }
 
   async callTool(name, args = {}) {
-    const payload = { method: name, params: args };
-    const res = await fetch(this.url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
+    try {
+      const payload = { method: name, params: args };
+      const res = await fetch(this.url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        timeout: 15000 // 15 segundos de timeout
+      });
+      
+      if (res.status === 429) {
+        throw new Error("Rate limit alcanzado");
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
+      return await res.json();
+    } catch (error) {
+      if (error.message.includes('Rate limit') || error.message.includes('429')) {
+        throw new Error("Rate limit alcanzado");
+      }
+      throw error;
+    }
   }
 
   async listTools() {
@@ -92,8 +105,22 @@ export class MCPStdioClient {
   }
 
   async callTool(name, args = {}) {
-    await this.initialize();
-    return this._send("tools/call", { name, arguments: args });
+    try {
+      await this.initialize();
+      return await this._send("tools/call", { name, arguments: args });
+    } catch (error) {
+      // Reintentar inicialización si falla
+      if (!this.initialized) {
+        try {
+          this.initialized = false;
+          await this.initialize();
+          return await this._send("tools/call", { name, arguments: args });
+        } catch (retryError) {
+          throw retryError;
+        }
+      }
+      throw error;
+    }
   }
 
   close() { try { this.proc.kill(); } catch {} }

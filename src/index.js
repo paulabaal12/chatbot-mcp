@@ -346,7 +346,7 @@ async function main() {
   });
   
   // Mensaje de bienvenida final
-  console.log(chalk.bold.green("🎉 ¡Chatbot MCP listo! Escribe tu consulta o 'exit' para salir."));
+  console.log(chalk.bold.green("🎉 Escribe tu consulta o 'exit' para salir."));
   console.log(chalk.gray("💡 Comandos especiales: 'log' para ver historial, 'exit' para salir\n"));
   rl.prompt();
 }

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Chatbot - Professional AI Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-robot"></i>
+                    <h1>MCP Assistant</h1>
+                </div>
+                <div class="subtitle">Model Context Protocol</div>
+            </div>
+            
+            <div class="sidebar-content">
+                <div class="status-card">
+                    <div class="status-indicator">
+                        <div class="status-dot online"></div>
+                        <span>Online</span>
+                    </div>
+                    <div class="connection-info">
+                        <span id="connectionStatus">Connected</span>
+                    </div>
+                </div>
+                
+                <div class="tools-section">
+                    <h3><i class="fas fa-tools"></i> Available Tools</h3>
+                    <div class="tools-grid">
+                        <div class="tool-item">
+                            <i class="fas fa-file-code"></i>
+                            <span>Filesystem</span>
+                        </div>
+                        <div class="tool-item">
+                            <i class="fab fa-git-alt"></i>
+                            <span>Git</span>
+                        </div>
+                        <div class="tool-item">
+                            <i class="fab fa-github"></i>
+                            <span>GitHub</span>
+                        </div>
+                        <div class="tool-item">
+                            <i class="fas fa-utensils"></i>
+                            <span>Kitchen</span>
+                        </div>
+                        <div class="tool-item">
+                            <i class="fas fa-cloud"></i>
+                            <span>Remote</span>
+                        </div>
+                        <div class="tool-item">
+                            <i class="fas fa-futbol"></i>
+                            <span>Sports</span>
+                        </div>
+                        <div class="tool-item">
+                            <i class="fas fa-bed"></i>
+                            <span>Sleep Coach</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <h4>Capabilities</h4>
+                    <ul>
+                        <li>File system operations</li>
+                        <li>Git repository management</li>
+                        <li>GitHub API integration</li>
+                        <li>Code analysis & generation</li>
+                        <li>Multi-language support</li>
+                        <li>Network protocol analysis</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Chat Area -->
+        <div class="main-content">
+            <div class="chat-header">
+                <div class="header-info">
+                    <h2>AI Assistant</h2>
+                    <span class="typing-indicator" id="typingIndicator">
+                        <i class="fas fa-circle"></i>
+                        <i class="fas fa-circle"></i>
+                        <i class="fas fa-circle"></i>
+                    </span>
+                </div>
+                <div class="header-actions">
+                    <button class="action-btn" title="Clear Chat">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="action-btn" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="chat-container" id="chatContainer">
+                <div class="welcome-message">
+                    <div class="welcome-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>Welcome to MCP Assistant</h3>
+                    <p>I'm your AI assistant powered by the Model Context Protocol. I can help you with file operations, Git management, code analysis, and much more!</p>
+                    <div class="quick-actions">
+                        <button class="quick-btn" onclick="sendQuickMessage('Help me with Git commands')">
+                            <i class="fab fa-git-alt"></i>
+                            Git Help
+                        </button>
+                        <button class="quick-btn" onclick="sendQuickMessage('Show me available MCP tools')">
+                            <i class="fas fa-tools"></i>
+                            Show Tools
+                        </button>
+                        <button class="quick-btn" onclick="sendQuickMessage('Analyze my project structure')">
+                            <i class="fas fa-folder-tree"></i>
+                            Project Analysis
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="Type your message here... (Press Enter to send, Shift+Enter for new line)"
+                        rows="1"
+                        maxlength="2000"
+                    ></textarea>
+                    <button id="sendButton" class="send-btn" title="Send Message">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span class="char-count">0/2000</span>
+                    <span class="hint">AI powered by Claude & MCP</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -259,7 +259,7 @@ async function main() {
       const formattedResponse = formatMCPResponse(result, mcpName, toolName);
       
       let emoji = '🤖';
-      if (mcpName.toLowerCase().includes('kitchen')) emoji = '🍳';
+      if (mcpName.toLowerCase().includes('kitchen')) emoji = '🥗';
       else if (mcpName.toLowerCase().includes('git')) emoji = '📂';
       else if (mcpName.toLowerCase().includes('remote')) emoji = '🌐';
       else if (mcpName.toLowerCase().includes('filesystem')) emoji = '📁';

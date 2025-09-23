@@ -42,9 +42,7 @@ async function main() {
       console.log(`[ERROR] Al obtener tools de ${cfg.name}:`, err);
     }
   }
-  // Guardar tools.json
   fs.writeFileSync("config/all_tools.json", JSON.stringify(allTools, null, 2), "utf8");
-  // Cerrar MCP
   clients.forEach(c => c.close && c.close());
 }
 

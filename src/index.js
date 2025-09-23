@@ -101,10 +101,9 @@ async function main() {
   try {
     execSync("node scripts/generate_tools_json.js", { stdio: "ignore" });
   } catch (e) {
-    // Silent fail - not critical
   }
 
-  // Mostrar resumen de MCPs disponibles con colores bonitos
+  // Mostrar resumen de MCPs disponibles 
   console.log(chalk.bold.cyan("🤖 Chatbot MCP con Sistema Dinámico"));
   const mcpToolCounts = servers.map(cfg => {
     const name = cfg.name || "";
@@ -113,14 +112,14 @@ async function main() {
   const totalTools = mcpToolCounts.reduce((sum, count) => sum + count, 0);
   console.log(chalk.green(`📦 ${servers.length} MCPs cargados con ${chalk.bold(totalTools)} herramientas disponibles`));
   
-  // Mostrar detalle de MCPs disponibles con colores
+  // Mostrar detalle de MCPs disponibles
   console.log(chalk.bold.blue("🔧 MCPs disponibles:"));
   servers.forEach((cfg, i) => {
     const name = cfg.name || `MCP ${i+1}`;
     const count = mcpToolCounts[i];
     console.log(chalk.cyan(`  • ${name}: ${chalk.bold.white(count)} tools`));
   });
-  console.log(""); // Línea en blanco
+  console.log(""); 
 
   // Inicializar MCP clients de forma segura con reintentos por si falla xd
   const results = await Promise.allSettled(servers.map(cfg => createMCPClient(cfg)));
@@ -144,7 +143,7 @@ async function main() {
   // Función auxiliar para ejecutar herramientas MCP
   async function executeMCPTool(mcpClient, mcpName, mcpIndex, toolName, toolArgs, userInput) {
     try {
-      // Mostrar indicador de ejecución en consola con colores
+      // Mostrar indicador de ejecución en consola
       console.log(chalk.cyan(`🔧 [Chatbot]: Ejecutando tool ${chalk.bold.white(toolName)} en ${chalk.bold.magenta(mcpName)}...`));
       
       // Log detallado solo a session.log
@@ -170,7 +169,7 @@ async function main() {
         }
       }
 
-      // Automatización para operaciones Git que requieren directorio de trabajo
+      // Automatización para operaciones Git que requieren directorio de trabajo (por si falla)
       if (mcpName.toLowerCase() === 'gitmcp' && 
           ['git_commit', 'git_push', 'git_add', 'git_status'].includes(toolName)) {
         
@@ -259,12 +258,13 @@ async function main() {
       // Formatear respuesta de manera legible
       const formattedResponse = formatMCPResponse(result, mcpName, toolName);
       
-      // Mostrar con emoji apropiado según el MCP
       let emoji = '🤖';
       if (mcpName.toLowerCase().includes('kitchen')) emoji = '🍳';
       else if (mcpName.toLowerCase().includes('git')) emoji = '📂';
       else if (mcpName.toLowerCase().includes('remote')) emoji = '🌐';
       else if (mcpName.toLowerCase().includes('filesystem')) emoji = '📁';
+      else if (mcpName.toLowerCase().includes('sleep')) emoji = '💤';
+      else if (mcpName.toLowerCase().includes('transfermarkt')) emoji = '⚽';
       
       console.log(`${emoji} [${mcpName}]: ${formattedResponse}`);
       
@@ -327,7 +327,7 @@ async function main() {
       return;
     }
 
-    // Sistema dinámico: Claude analiza all_tools.json automáticamente
+    // En este caso Claude analiza all_tools.json automáticamente
     try {
       const autoMapping = await findToolForQuery(input, claude, history);
       
@@ -376,7 +376,7 @@ async function main() {
   });
   
   // Mensaje de bienvenida final
-  console.log(chalk.bold.green("🎉 Escribe tu consulta o 'exit' para salir."));
+  console.log(chalk.bold.green("Escribe tu consulta o 'exit' para salir."));
   console.log(chalk.gray("💡 Comandos especiales: 'log' para ver historial, 'exit' para salir\n"));
   rl.prompt();
 }

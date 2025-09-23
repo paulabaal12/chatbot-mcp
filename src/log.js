@@ -1,4 +1,4 @@
-// Módulo para guardar logs de la conversación (ES Modules)
+
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -20,7 +20,7 @@ export function logInteraction(role, content) {
   fs.appendFileSync(LOG_FILE, logLine, 'utf8');
 }
 
-// logging JSON-RPC detallado
+// logging JSON-RPC detallado en session.log
 export function logJsonRpc(direction, serverName, jsonData) {
   const timestamp = new Date().toISOString();
   const formattedJson = JSON.stringify(jsonData, null, 2);

@@ -6,7 +6,7 @@ import { logInteraction } from "./log.js";
 import { findToolForQuery } from "./dynamic_query_mapper.js";
 import fs from "fs";
 import { execSync } from "child_process";
-
+/// ESTO DISQUE ES PARA LA UI JASDJ
 // Variables globales para cachear
 let allTools = [];
 let serversLoaded = false;

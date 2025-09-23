@@ -31,7 +31,7 @@ export async function findToolForQuery(query, claudeClient, conversationHistory 
         loadAllTools();
     }
     
-    // Filtro temprano: detectar preguntas sobre personas
+    // Filtro temprano: detectar preguntas sobre personas ya que a veces se bugguea
     const personalQuestions = /^(quien es|quién es|who is|cuando nació|cuándo nació|when was.*born|donde nació|dónde nació|where was.*born|cuando murió|cuándo murió|when did.*die)/i;
     if (personalQuestions.test(query.trim())) {
         return null; // No usar herramientas para preguntas sobre personas
@@ -52,74 +52,74 @@ export async function findToolForQuery(query, claudeClient, conversationHistory 
     
     const prompt = `Analiza esta consulta y selecciona la herramienta MAS APROPIADA:
 
-CONSULTA: "${query}"${contextText}
+            CONSULTA: "${query}"${contextText}
 
-HERRAMIENTAS DISPONIBLES:
-${JSON.stringify(toolsSummary, null, 1)}
+            HERRAMIENTAS DISPONIBLES:
+            ${JSON.stringify(toolsSummary, null, 1)}
 
-REGLAS CRÍTICAS - NO USAR HERRAMIENTAS PARA:
-❌ Preguntas sobre personas famosas: "quien es charles leclerc", "quien es alan turing"
-❌ Fechas de nacimiento/muerte: "cuando nació", "cuando murió"  
-❌ Biografías e información general de personas
-❌ Preguntas de seguimiento biográficas
-❌ Fechas históricas (solo usar get_time para hora actual del sistema)
+            REGLAS CRÍTICAS - NO USAR HERRAMIENTAS PARA:
+            ❌ Preguntas sobre personas famosas: "quien es charles leclerc", "quien es alan turing"
+            ❌ Fechas de nacimiento/muerte: "cuando nació", "cuando murió"  
+            ❌ Biografías e información general de personas
+            ❌ Preguntas de seguimiento biográficas
+            ❌ Fechas históricas (solo usar get_time para hora actual del sistema)
 
-USAR HERRAMIENTAS SOLO PARA:
-✅ Crear/leer archivos específicos
-✅ Operaciones Git/GitHub específicas  
-✅ Recetas con ingredientes específicos
-✅ Taylor Swift lyrics (solo "taylor swift")
-✅ Hora actual del sistema
+            USAR HERRAMIENTAS SOLO PARA:
+            ✅ Crear/leer archivos específicos
+            ✅ Operaciones Git/GitHub específicas  
+            ✅ Recetas con ingredientes específicos
+            ✅ Taylor Swift lyrics (solo "taylor swift")
+            ✅ Hora actual del sistema
 
-REGLAS DE SELECCIÓN:
-- "crea un archivo [nombre]" → usar "write_file" (NO create_directory)
-- "crea repositorio [nombre]" → usar "github_create_repo" para GitHub (SIEMPRE GitHub por defecto)
-- "crea un repositorio [nombre]" → usar "github_create_repo" para GitHub
-- "clona el repositorio [nombre]" → usar "git_clone" 
-- "crea una carpeta/directorio" → usar "create_directory"
-- "lee/lee archivo [path específico]" → usar "read_file" 
-- "commit/hacer commit" → usar "git_commit"
-- "push" o "haz push" → usar "git_push"
-- "receta con [ingrediente]" → usar "get_recipes_by_ingredients"
-- "receta [dieta]" → usar "suggest_recipe_by_diet"
-- "calorías/nutrición" → usar "get_food_by_name"
-- "taylor swift" → usar "taylor_lyric"
-- "¿qué hora es ahora?" o "hora actual" o "tiempo actual" → usar "get_time"
+            REGLAS DE SELECCIÓN:
+            - "crea un archivo [nombre]" → usar "write_file" (NO create_directory)
+            - "crea repositorio [nombre]" → usar "github_create_repo" para GitHub (SIEMPRE GitHub por defecto)
+            - "crea un repositorio [nombre]" → usar "github_create_repo" para GitHub
+            - "clona el repositorio [nombre]" → usar "git_clone" 
+            - "crea una carpeta/directorio" → usar "create_directory"
+            - "lee/lee archivo [path específico]" → usar "read_file" 
+            - "commit/hacer commit" → usar "git_commit"
+            - "push" o "haz push" → usar "git_push"
+            - "receta con [ingrediente]" → usar "get_recipes_by_ingredients"
+            - "receta [dieta]" → usar "suggest_recipe_by_diet"
+            - "calorías/nutrición" → usar "get_food_by_name"
+            - "taylor swift" → usar "taylor_lyric"
+            - "¿qué hora es ahora?" o "hora actual" o "tiempo actual" → usar "get_time"
 
-IMPORTANTE: 
-- Para PREGUNTAS GENERALES → NO usar herramientas (retornar null):
-  * "¿Quién es X?", "¿Quién fue X?", "quien es X", "quien fue X"
-  * "¿Qué es Y?", "que es Y", "explica Y"
-  * "¿Cuándo nació X?", "cuando nació X", "when was X born"
-  * "¿Dónde nació X?", "donde nació X"
-  * "¿Cuándo murió X?", "cuando murió X"
-  * Biografías, fechas históricas, información general de personas
-- Para PREGUNTAS DE SEGUIMIENTO sobre personas → NO usar herramientas (retornar null):
-  * "¿En qué fecha nació?", "¿Dónde nació?", "¿Cuándo murió?"
-  * "cuando nació", "where was he born", "when did he die"
-- Para FECHAS HISTÓRICAS de personas → NO usar herramientas (retornar null)
-- Solo usar "get_time" para HORA/FECHA ACTUAL DEL SISTEMA, NO para fechas históricas
-- Si menciona nombres de personas famosas (atletas, científicos, etc.) → NO usar herramientas (retornar null)
-- Para "crea repositorio" SIN especificar "local" → SIEMPRE usar "github_create_repo"
-- Solo usar herramientas para ACCIONES ESPECÍFICAS (crear, leer archivos, git, recetas específicas)
-- Para crear ARCHIVOS usa "write_file", NO "create_directory"
-- Para crear CARPETAS usa "create_directory"
-- Para GitHub usa herramientas de "GithubMCP"
-- Para Git local usa herramientas de "GitMCP"
+            IMPORTANTE: 
+            - Para PREGUNTAS GENERALES → NO usar herramientas (retornar null):
+            * "¿Quién es X?", "¿Quién fue X?", "quien es X", "quien fue X"
+            * "¿Qué es Y?", "que es Y", "explica Y"
+            * "¿Cuándo nació X?", "cuando nació X", "when was X born"
+            * "¿Dónde nació X?", "donde nació X"
+            * "¿Cuándo murió X?", "cuando murió X"
+            * Biografías, fechas históricas, información general de personas
+            - Para PREGUNTAS DE SEGUIMIENTO sobre personas → NO usar herramientas (retornar null):
+            * "¿En qué fecha nació?", "¿Dónde nació?", "¿Cuándo murió?"
+            * "cuando nació", "where was he born", "when did he die"
+            - Para FECHAS HISTÓRICAS de personas → NO usar herramientas (retornar null)
+            - Solo usar "get_time" para HORA/FECHA ACTUAL DEL SISTEMA, NO para fechas históricas
+            - Si menciona nombres de personas famosas (atletas, científicos, etc.) → NO usar herramientas (retornar null)
+            - Para "crea repositorio" SIN especificar "local" → SIEMPRE usar "github_create_repo"
+            - Solo usar herramientas para ACCIONES ESPECÍFICAS (crear, leer archivos, git, recetas específicas)
+            - Para crear ARCHIVOS usa "write_file", NO "create_directory"
+            - Para crear CARPETAS usa "create_directory"
+            - Para GitHub usa herramientas de "GithubMCP"
+            - Para Git local usa herramientas de "GitMCP"
 
-RESPONDE EXACTAMENTE en este formato JSON:
-{
-  "tool": "nombre_exacto_de_la_herramienta",
-  "mcp": "nombre_exacto_del_mcp", 
-  "confidence": 0.9
-}
+            RESPONDE EXACTAMENTE en este formato JSON:
+            {
+            "tool": "nombre_exacto_de_la_herramienta",
+            "mcp": "nombre_exacto_del_mcp", 
+            "confidence": 0.9
+            }
 
-Si no hay herramienta apropiada:
-{
-  "tool": null,
-  "mcp": null,
-  "confidence": 0.0
-}`;
+            Si no hay herramienta apropiada:
+            {
+            "tool": null,
+            "mcp": null,
+            "confidence": 0.0
+            }`;
 
     try {
         const response = await claudeClient.createMessage({
@@ -136,7 +136,7 @@ Si no hay herramienta apropiada:
         // Extraer JSON de la respuesta
         const jsonMatch = claudeResponse.match(/\{[\s\S]*?\}/);
         if (!jsonMatch) {
-            // Error only in logs
+            // el error solo se ve en log
             return null;
         }
         
@@ -177,7 +177,7 @@ async function generateArgumentsForTool(query, tool, claudeClient) {
         return {};
     }
     
-    // Crear prompt específico para generar argumentos
+    // Crear prompt específico para generar argumentos y no se arruine xdddd
     const schemaDescription = tool.input_schema.properties ? 
         Object.entries(tool.input_schema.properties).map(([key, value]) => 
             `${key}: ${value.description || value.type || 'parámetro'}`

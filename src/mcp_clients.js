@@ -95,7 +95,6 @@ export class MCPHttpClient {
       tools: [
         { name: "get_time", description: "Get current time in UTC or specified timezone" },
         { name: "lucky_number", description: "Get a random lucky number between 1 and 100" },
-        { name: "fun_fact", description: "Get a random fun fact" },
         { name: "taylor_lyric", description: "Get a random Taylor Swift lyric and song title" }
       ]
     };
@@ -201,7 +200,6 @@ export class MCPStdioClient {
   close() { try { this.proc.kill(); } catch {} }
 }
 
-// Cargar servers.json
 export function loadServersConfig(configPath = "config/servers.json") {
   const absPath = path.isAbsolute(configPath) ? configPath : path.join(process.cwd(), configPath);
   if (!fs.existsSync(absPath)) throw new Error("No se encontró el archivo de configuración: " + absPath);

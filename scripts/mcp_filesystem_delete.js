@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import readline from 'readline';
 import fs from 'fs/promises';
 import path from 'path';

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import readline from 'readline';
 import { deleteGithubRepo, createGithubRepo } from '../config/github_api.js';
 import dotenv from 'dotenv';
@@ -145,7 +144,6 @@ rl.on('line', async (line) => {
       return;
     }
   }
-  // Opcional: responder a initialize para compatibilidad
   if (req.method === 'initialize') {
     sendRPC(id, { ok: true });
     return;

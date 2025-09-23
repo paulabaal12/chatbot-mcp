@@ -5,17 +5,17 @@ A sophisticated console-based chatbot that implements the Model Context Protocol
 ## 🚀 Features
 
 ### Core Functionality
-- **LLM Integration**: Direct API connection to Claude (Anthropic) for natural language processing
+- **Direct MCP Integration**: Native Model Context Protocol implementation without Claude API dependencies
 - **Context Management**: Maintains conversation context across multiple interactions
 - **Comprehensive Logging**: Detailed session logs for all MCP interactions and responses
-- **Dynamic Tool Selection**: AI-powered tool selection using semantic analysis
+- **Dynamic Tool Selection**: Intelligent tool selection based on natural language analysis
 
 ### MCP Server Support
-- **7 MCP Servers**: 64+ tools available across multiple domains
+- **8 MCP Servers**: 69+ tools available across multiple domains
 - **Local Official Servers**: Filesystem and Git operations
-- **Custom Local Server**: Kitchen/Recipe functionality
+- **Custom Local Servers**: Kitchen/Recipe functionality, Filesystem Delete operations
 - **Remote Server**: Cloudflare Workers deployment with Taylor Swift lyrics
-- **Third-party Integration**: External student servers (Transfermarkt)
+- **Third-party Integration**: External student servers (Transfermarkt, SleepCoach)
 
 ### Advanced Features
 - **Intelligent Automation**: Automatic Git workflow management
@@ -27,14 +27,14 @@ A sophisticated console-based chatbot that implements the Model Context Protocol
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Claude API    │    │   MCP Chatbot    │    │  MCP Servers    │
-│   (LLM Host)    │◄──►│   (Client)       │◄──►│  (Tools)        │
+│  Natural Lang   │    │   MCP Chatbot    │    │  MCP Servers    │
+│  Processing     │◄──►│   (Client)       │◄──►│  (Tools)        │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
                               │
                               ▼
                        ┌──────────────────┐
                        │ Dynamic Query    │
-                       │ Mapper (AI)      │
+                       │ Mapper           │
                        └──────────────────┘
 ```
 
@@ -43,8 +43,8 @@ A sophisticated console-based chatbot that implements the Model Context Protocol
 ### Prerequisites
 - **Node.js** 18+ 
 - **Git** (for version control operations)
-- **Claude API Key** (Anthropic account with $5 free credits)
 - **GitHub Token** (for repository operations)
+- **MCP Servers** (automatically installed or configured)
 
 ### Setup
 
@@ -63,7 +63,6 @@ npm install
 
 Create `config/.env` file:
 ```env
-CLAUDE_API_KEY=your_claude_api_key_here
 GITHUB_TOKEN=your_github_token_here
 GITHUB_OWNER=your_github_username
 ```
@@ -90,16 +89,19 @@ node src/index.js
 You'll see the startup information:
 ```
 🤖 Chatbot MCP con Sistema Dinámico
-📦 7 MCPs cargados con 64 herramientas disponibles
-✨ Sistema completamente dinámico activado
+📦 8 MCPs cargados con 69 herramientas disponibles
+🔧 MCPs disponibles:
+  • FilesystemMCP: 14 tools
+  • GitMCP: 25 tools
+  • GithubMCP: 3 tools
+  • KitchenMCP: 11 tools
+  • FilesystemDeleteMCP: 1 tools
+  • RemoteMCP: 4 tools
+  • TransfermarktMCP: 6 tools
+  • SleepCoachMCP: 5 tools
 
-MCPs disponibles:
-• FilesystemMCP: 14 tools
-• GitMCP: 25 tools  
-• GithubMCP: 3 tools
-• KitchenMCP: 11 tools
-• RemoteMCP: 4 tools
-• TransfermarktMCP: 6 tools
+🎉 Escribe tu consulta o 'exit' para salir.
+💡 Comandos especiales: 'log' para ver historial, 'exit' para salir
 ```
 
 ### Example Commands
@@ -115,13 +117,13 @@ MCPs disponibles:
 
 #### File Operations (Filesystem MCP)
 ```
-> create file test.txt with content "Hello MCP"
-[Chatbot]: Executing tool write_file in FilesystemMCP...
-[Claude + FilesystemMCP]: Successfully wrote to test.txt
+> crea un archivo hola.txt en D:\Documentos\Universidad\OCTAVO SEMESTRE\REDES
+🔧 [Chatbot]: Ejecutando tool write_file en FilesystemMCP...
+🤖 [FilesystemMCP]: Successfully wrote to D:\Documentos\Universidad\OCTAVO SEMESTRE\REDES\hola.txt
 
 > read file test.txt  
-[Chatbot]: Executing tool read_text_file in FilesystemMCP...
-[Claude + FilesystemMCP]: Hello MCP
+🔧 [Chatbot]: Ejecutando tool read_text_file en FilesystemMCP...
+🤖 [FilesystemMCP]: Hello MCP
 ```
 
 #### Git Operations (Git MCP + GitHub MCP)
@@ -142,16 +144,46 @@ MCPs disponibles:
 
 #### Recipe Suggestions (Kitchen MCP)
 ```
-> recipe with cheese
-[Chatbot]: Executing tool get_recipes_by_ingredients in KitchenMCP...
-[Claude + KitchenMCP]: [Returns 5 detailed cheese recipes]
+> Necesito un sustituto de arroz
+🔧 [Chatbot]: Ejecutando tool suggest_ingredient_substitution en KitchenMCP...
+🍳 [KitchenMCP]: {
+  "ingredient": "rice, brown, long-grain",
+  "substitutions": [
+    "Barley, pearled, cooked",
+    "Oil, rice bran",
+    "Quinoa, uncooked",
+    "Wild rice, raw"
+  ]
+}
+
+> Que utensilios de cocina necesito para cocinar lasaña
+🔧 [Chatbot]: Ejecutando tool suggest_utensils_for_recipe en KitchenMCP...
+🍳 [KitchenMCP]: {
+  "recipe": "lasaña",
+  "utensils": [
+    "knife", "cutting board", "spoon", "fork", "bowl", "pot", "pan",
+    "colander", "measuring cups", "measuring spoons", "mixing bowls",
+    "whisk", "spatula", "tongs", "oven mitts", "peeler", "grater",
+    "ladle", "can opener", "tray", "storage container"
+  ]
+}
 ```
 
-#### Remote Server (Taylor Swift Lyrics)
+#### Remote Server (Taylor Swift Lyrics & Time)
 ```
 > taylor swift lyric
-[Chatbot]: Executing tool taylor_lyric in RemoteMCP...
-[Claude + RemoteMCP]: "Love Story" - "Romeo, take me somewhere we can be alone"
+🔧 [Chatbot]: Ejecutando tool taylor_lyric en RemoteMCP...
+🌐 [RemoteMCP]: {
+  "title": "exile (Ft. Bon Iver)",
+  "lyric": "You never turned things around"
+}
+
+> que horas son
+🔧 [Chatbot]: Ejecutando tool get_time en RemoteMCP...
+🌐 [RemoteMCP]: {
+  "timezone": "UTC",
+  "time": "2025-09-23T17:10:25.878Z"
+}
 ```
 
 #### View Session Logs
@@ -210,12 +242,15 @@ The system uses Claude to analyze user input and automatically select the most a
 
 ### Custom Servers  
 - **GithubMCP** (3 tools): GitHub repository creation and management
-- **KitchenMCP** (11 tools): Recipe suggestions, nutritional information
+- **KitchenMCP** (11 tools): Recipe suggestions, nutritional information, cooking utensils
 - **FilesystemDeleteMCP** (1 tool): Advanced file deletion operations
 
 ### Remote Servers
 - **RemoteMCP** (4 tools): Time utilities, random generators, Taylor Swift lyrics
-- **TransfermarktMCP** (6 tools): Football/soccer statistics and information
+
+### Third-party Servers
+- **TransfermarktMCP** (6 tools): Football/soccer statistics and information  
+- **SleepCoachMCP** (5 tools): Sleep tracking and wellness coaching
 
 ## 🔍 Troubleshooting
 

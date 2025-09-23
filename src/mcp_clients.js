@@ -1,4 +1,9 @@
 import fetch from "node-fetch";
+import { spawn } from "child_process";
+import path from "path";
+import fs from "fs";
+import { logJsonRpc } from './log.js';
+
 // Cliente HTTP para MCP remoto
 export class MCPHttpClient {
   constructor(url) {
@@ -8,7 +13,24 @@ export class MCPHttpClient {
 
   async callTool(name, args = {}) {
     try {
-      const payload = { method: name, params: args };
+      // Para herramientas específicas, usar el nombre directamente
+      // Para tools/call, extraer el nombre real de los parámetros
+      let methodName = name;
+      let methodParams = args;
+      
+      if (name === "tools/call" && args.name) {
+        methodName = args.name;
+        methodParams = args.arguments || {};
+      }
+      
+      const payload = {
+        method: methodName,
+        params: methodParams
+      };
+      
+      // Log del request JSON-RPC
+      logJsonRpc("REQUEST", "RemoteMCP", payload);
+      
       const res = await fetch(this.url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -21,7 +43,17 @@ export class MCPHttpClient {
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
-      return await res.json();
+      const result = await res.json();
+      
+      // Log del response JSON-RPC
+      logJsonRpc("RESPONSE", "RemoteMCP", result);
+      
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify(result, null, 2)
+        }]
+      };
     } catch (error) {
       if (error.message.includes('Rate limit') || error.message.includes('429')) {
         throw new Error("Rate limit alcanzado");
@@ -33,7 +65,24 @@ export class MCPHttpClient {
   async listTools() {
     try {
       // Para servidores remotos HTTP, usar tools/list directamente
-      const result = await this.callTool("tools/list", {});
+      const payload = {
+        method: "tools/list",
+        params: {}
+      };
+      
+      logJsonRpc("REQUEST", "RemoteMCP", payload);
+      
+      const res = await fetch(this.url, {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const result = await res.json();
+      
+      logJsonRpc("RESPONSE", "RemoteMCP", result);
+      
       if (result && result.tools) {
         return result;
       }
@@ -54,9 +103,6 @@ export class MCPHttpClient {
 
   close() {}
 }
-import { spawn } from "child_process";
-import path from "path";
-import fs from "fs";
 
 export class MCPStdioClient {
   constructor(command, args = [], options = {}, shellOption = true) {
@@ -75,6 +121,10 @@ export class MCPStdioClient {
         if (!line.trim()) continue;
         let msg;
         try { msg = JSON.parse(line); } catch { continue; }
+        
+        // Log del response JSON-RPC
+        logJsonRpc("RESPONSE", "STDIO-MCP", msg);
+        
         if (msg.id && this.pending.has(msg.id)) {
           const { resolve, reject } = this.pending.get(msg.id);
           this.pending.delete(msg.id);
@@ -84,10 +134,7 @@ export class MCPStdioClient {
       }
     });
 
-    // Silenciar STDERR de los MCPs para evitar spam en consola
     this.proc.stderr.on("data", (data) => {
-      // Comentado para no imprimir nada:
-      // console.error(`[${command}] STDERR:`, data.toString());
     });
 
     this.proc.on("exit", (code) => {
@@ -102,6 +149,10 @@ export class MCPStdioClient {
     return new Promise((resolve, reject) => {
       const id = this.id++;
       const payload = { jsonrpc: "2.0", id, method, params };
+      
+      // Log del request JSON-RPC
+      logJsonRpc("REQUEST", "STDIO-MCP", payload);
+      
       this.pending.set(id, { resolve, reject });
       this.proc.stdin.write(JSON.stringify(payload) + "\n");
     });

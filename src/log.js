@@ -20,6 +20,14 @@ export function logInteraction(role, content) {
   fs.appendFileSync(LOG_FILE, logLine, 'utf8');
 }
 
+// logging JSON-RPC detallado
+export function logJsonRpc(direction, serverName, jsonData) {
+  const timestamp = new Date().toISOString();
+  const formattedJson = JSON.stringify(jsonData, null, 2);
+  const logLine = `[${timestamp}] [JSON-RPC ${direction.toUpperCase()}] [${serverName}]:\n${formattedJson}\n\n`;
+  fs.appendFileSync(LOG_FILE, logLine, 'utf8');
+}
+
 export function showLog() {
   if (fs.existsSync(LOG_FILE)) {
     const data = fs.readFileSync(LOG_FILE, 'utf8');

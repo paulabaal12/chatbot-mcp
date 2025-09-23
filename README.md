@@ -146,44 +146,53 @@ You'll see the startup information:
 ```
 > Necesito un sustituto de arroz
 🔧 [Chatbot]: Ejecutando tool suggest_ingredient_substitution en KitchenMCP...
-🍳 [KitchenMCP]: {
-  "ingredient": "rice, brown, long-grain",
-  "substitutions": [
-    "Barley, pearled, cooked",
-    "Oil, rice bran",
-    "Quinoa, uncooked",
-    "Wild rice, raw"
-  ]
-}
+🥗 [KitchenMCP]: ingredient: rice, brown, long-grain
+  substitutions:   
+  • Barley, pearled, cooked
+  • Oil, rice bran
+  • Quinoa, uncooked
+  • Wild rice, raw
 
 > Que utensilios de cocina necesito para cocinar lasaña
 🔧 [Chatbot]: Ejecutando tool suggest_utensils_for_recipe en KitchenMCP...
-🍳 [KitchenMCP]: {
-  "recipe": "lasaña",
-  "utensils": [
-    "knife", "cutting board", "spoon", "fork", "bowl", "pot", "pan",
-    "colander", "measuring cups", "measuring spoons", "mixing bowls",
-    "whisk", "spatula", "tongs", "oven mitts", "peeler", "grater",
-    "ladle", "can opener", "tray", "storage container"
-  ]
-}
+🥗 [KitchenMCP]: recipe: lasaña
+  utensils:   
+  • knife
+  • cutting board
+  • spoon
+  • fork
+  • bowl
+  • pot
+  • pan
+  • colander
+  • measuring cups
+  • measuring spoons
+  • mixing bowls
+  • whisk
+  • spatula
+  • tongs
+  • oven mitts
+  • peeler
+  • grater
+  • ladle
+  • can opener
+  • tray
+  • storage container
 ```
 
 #### Remote Server (Taylor Swift Lyrics & Time)
 ```
 > taylor swift lyric
 🔧 [Chatbot]: Ejecutando tool taylor_lyric en RemoteMCP...
-🌐 [RemoteMCP]: {
-  "title": "exile (Ft. Bon Iver)",
-  "lyric": "You never turned things around"
-}
+🌐 [RemoteMCP]: 
+title: Would've, Could've, Should've
+lyric: Memories feel like weapons
 
 > que horas son
 🔧 [Chatbot]: Ejecutando tool get_time en RemoteMCP...
-🌐 [RemoteMCP]: {
-  "timezone": "UTC",
-  "time": "2025-09-23T17:10:25.878Z"
-}
+🔧 [Chatbot]: Ejecutando tool get_time en RemoteMCP...
+🌐 [RemoteMCP]: timezone: UTC
+time: 2025-09-23T23:07:46.100Z
 ```
 
 #### View Session Logs

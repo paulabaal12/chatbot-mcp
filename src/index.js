@@ -265,7 +265,7 @@ async function main() {
       else if (mcpName.toLowerCase().includes('filesystem')) emoji = '📁';
       else if (mcpName.toLowerCase().includes('sleep')) emoji = '💤';
       else if (mcpName.toLowerCase().includes('transfermarkt')) emoji = '⚽';
-      
+      else if (mcpName.toLowerCase().includes('gaming') || mcpName.toLowerCase().includes('rawg')) emoji = '🎮';
       console.log(`${emoji} [${mcpName}]: ${formattedResponse}`);
       
       // Registrar en el historial

@@ -4021,7 +4021,7 @@
   },
   {
     "name": "get_time",
-    "description": "Returns the current time in UTC or a specified timezone.",
+    "description": "Get current time in UTC or specified timezone",
     "input_schema": {},
     "output_schema": {},
     "annotations": {},
@@ -4029,15 +4029,7 @@
   },
   {
     "name": "lucky_number",
-    "description": "Returns a random lucky number between 1 and 100.",
-    "input_schema": {},
-    "output_schema": {},
-    "annotations": {},
-    "mcp": "RemoteMCP"
-  },
-  {
-    "name": "fun_fact",
-    "description": "Returns a random fun fact.",
+    "description": "Get a random lucky number between 1 and 100",
     "input_schema": {},
     "output_schema": {},
     "annotations": {},
@@ -4045,7 +4037,7 @@
   },
   {
     "name": "taylor_lyric",
-    "description": "Returns a random lyric and song title from Taylor Swift's discography.",
+    "description": "Get a random Taylor Swift lyric and song title",
     "input_schema": {},
     "output_schema": {},
     "annotations": {},
@@ -4342,5 +4334,208 @@
     "output_schema": {},
     "annotations": {},
     "mcp": "SleepCoachMCP"
+  },
+  {
+    "name": "search_games",
+    "description": "Search for games by name in RAWG database\n\nArgs:\n    query: Game name to search for\n    page_size: Number of results (max 20, default 5)\n\nReturns:\n    Formatted list of matching games",
+    "input_schema": {
+      "properties": {
+        "query": {
+          "title": "Query",
+          "type": "string"
+        },
+        "page_size": {
+          "default": 5,
+          "title": "Page Size",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "type": "object"
+    },
+    "output_schema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "_WrappedResult",
+      "type": "object",
+      "x-fastmcp-wrap-result": true
+    },
+    "annotations": {},
+    "mcp": "rawg-gaming-mcp"
+  },
+  {
+    "name": "get_popular_games",
+    "description": "Get popular games list\n\nArgs:\n    page_size: Number of games to get (max 20, default 10)\n\nReturns:\n    Formatted list of popular games",
+    "input_schema": {
+      "properties": {
+        "page_size": {
+          "default": 10,
+          "title": "Page Size",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "output_schema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "_WrappedResult",
+      "type": "object",
+      "x-fastmcp-wrap-result": true
+    },
+    "annotations": {},
+    "mcp": "rawg-gaming-mcp"
+  },
+  {
+    "name": "get_games_by_genre",
+    "description": "Search games filtered by genre\n\nArgs:\n    genre: Game genre (e.g. action, rpg, strategy, adventure, shooter)\n    page_size: Number of games to get (max 20, default 10)\n\nReturns:\n    Formatted list of games in the specified genre",
+    "input_schema": {
+      "properties": {
+        "genre": {
+          "title": "Genre",
+          "type": "string"
+        },
+        "page_size": {
+          "default": 10,
+          "title": "Page Size",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "genre"
+      ],
+      "type": "object"
+    },
+    "output_schema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "_WrappedResult",
+      "type": "object",
+      "x-fastmcp-wrap-result": true
+    },
+    "annotations": {},
+    "mcp": "rawg-gaming-mcp"
+  },
+  {
+    "name": "get_game_details",
+    "description": "Get detailed information about a specific game\n\nArgs:\n    game_name: Exact or partial game name\n\nReturns:\n    Detailed game information including description, platforms, developers, etc.",
+    "input_schema": {
+      "properties": {
+        "game_name": {
+          "title": "Game Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "game_name"
+      ],
+      "type": "object"
+    },
+    "output_schema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "_WrappedResult",
+      "type": "object",
+      "x-fastmcp-wrap-result": true
+    },
+    "annotations": {},
+    "mcp": "rawg-gaming-mcp"
+  },
+  {
+    "name": "get_trending_games",
+    "description": "Get currently trending games\n\nArgs:\n    page_size: Number of games to get (max 20, default 10)\n\nReturns:\n    Formatted list of trending games",
+    "input_schema": {
+      "properties": {
+        "page_size": {
+          "default": 10,
+          "title": "Page Size",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "output_schema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "_WrappedResult",
+      "type": "object",
+      "x-fastmcp-wrap-result": true
+    },
+    "annotations": {},
+    "mcp": "rawg-gaming-mcp"
+  },
+  {
+    "name": "get_games_by_platform",
+    "description": "Get games filtered by platform\n\nArgs:\n    platform: Platform name (e.g. pc, playstation-5, xbox-one, nintendo-switch)\n    page_size: Number of games to get (max 20, default 10)\n\nReturns:\n    Formatted list of games for the specified platform",
+    "input_schema": {
+      "properties": {
+        "platform": {
+          "title": "Platform",
+          "type": "string"
+        },
+        "page_size": {
+          "default": 10,
+          "title": "Page Size",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "platform"
+      ],
+      "type": "object"
+    },
+    "output_schema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "_WrappedResult",
+      "type": "object",
+      "x-fastmcp-wrap-result": true
+    },
+    "annotations": {},
+    "mcp": "rawg-gaming-mcp"
   }
 ]

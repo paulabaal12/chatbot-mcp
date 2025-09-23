@@ -55,5 +55,12 @@
     "command": "python",
     "args": ["sleep_coach.py"],
     "cwd": "D:/Documentos/GitHub/SleepCoachServer"
+  },
+  {
+    "name": "rawg-gaming-mcp",
+    "type": "stdio",
+    "command": "python",
+    "args": ["server/mcp_server.py"],
+    "cwd": "D:/Documentos/GitHub/MCP_VIDEOGAMES_REC_INFO"
   }
 ]

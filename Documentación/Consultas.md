@@ -93,3 +93,8 @@
 - ¿Qué debo hacer si me despierto mucho durante la noche?
 - Dame consejos para una persona que se acuesta tarde pero debe levantarse temprano
 - ¿Cómo afecta el ejercicio al sueño y cuándo debo hacerlo?
+
+
+### **Videojuegos**
+- Give me information about videogame of Mario Kart
+- Give other games with that genre

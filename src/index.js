@@ -17,6 +17,75 @@ try {
   console.warn("[WARN] No se pudo cargar all_tools.json:", e);
 }
 
+// Función para formatear respuestas JSON de manera más legible
+function formatMCPResponse(result, mcpName, toolName) {
+  if (!result || result === null || result === undefined) {
+    return "❌ No se encontró información";
+  }
+  
+  // Extraer el contenido real si está dentro de estructuras MCP estándar
+  let actualContent = result;
+  
+  // Si hay estructura content -> array -> text, extraer el texto
+  if (result.content && Array.isArray(result.content) && result.content.length > 0) {
+    const firstItem = result.content[0];
+    if (firstItem.text) {
+      try {
+        // Si el texto es JSON válido, parsearlo
+        actualContent = JSON.parse(firstItem.text);
+      } catch (e) {
+        // Si no es JSON, usar el texto tal como está
+        actualContent = firstItem.text;
+      }
+    }
+  }
+  
+  // Función recursiva para formatear cualquier estructura JSON de manera limpia
+  function formatValue(value, indent = '') {
+    if (value === null || value === undefined) {
+      return 'Sin información';
+    }
+    
+    if (typeof value === 'string') {
+      return value;
+    }
+    
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+    
+    if (Array.isArray(value)) {
+      if (value.length === 0) return 'Lista vacía';
+      return value.map((item, index) => 
+        `${indent}• ${formatValue(item, indent + '  ')}`
+      ).join('\n');
+    }
+    
+    if (typeof value === 'object') {
+      const entries = Object.entries(value).filter(([key, val]) => 
+        val !== null && val !== undefined && val !== ''
+      );
+      
+      if (entries.length === 0) return 'Sin datos';
+      
+      return entries.map(([key, val]) => {
+        const cleanKey = key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').toLowerCase();
+        const formattedValue = formatValue(val, indent + '  ');
+        
+        if (typeof val === 'object' && !Array.isArray(val)) {
+          return `${indent}${cleanKey}:\n${formattedValue}`;
+        } else {
+          return `${indent}${cleanKey}: ${formattedValue}`;
+        }
+      }).join('\n');
+    }
+    
+    return String(value);
+  }
+  
+  return formatValue(actualContent);
+}
+
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 rl.setPrompt(chalk.bold.cyan("🤖 [Chatbot] > "));
 const apiKey = process.env.CLAUDE_API_KEY;
@@ -187,62 +256,23 @@ async function main() {
 
       logInteraction('assistant', `[${mcpName}]:\n${JSON.stringify(result, null, 2)}`);
       
-      // Usar el método especializado de Claude para interpretar respuestas
-      const response = await claude.interpretMCPResponse(toolName, mcpName, result, userInput);
+      // Formatear respuesta de manera legible
+      const formattedResponse = formatMCPResponse(result, mcpName, toolName);
       
+      // Mostrar con emoji apropiado según el MCP
+      let emoji = '🤖';
+      if (mcpName.toLowerCase().includes('kitchen')) emoji = '🍳';
+      else if (mcpName.toLowerCase().includes('git')) emoji = '📂';
+      else if (mcpName.toLowerCase().includes('remote')) emoji = '🌐';
+      else if (mcpName.toLowerCase().includes('filesystem')) emoji = '📁';
+      
+      console.log(`${emoji} [${mcpName}]: ${formattedResponse}`);
+      
+      // Registrar en el historial
       history.push({ role: "user", content: userInput });
-      history.push({ role: "assistant", content: response.content });
+      history.push({ role: "assistant", content: formattedResponse });
       logInteraction('user', userInput);
-      logInteraction('assistant', response.content[0]?.text || "(sin respuesta)");
-      
-      // Mostrar en consola con formato bonito y colores
-      const responseText = response.content[0]?.text || "(sin respuesta)";
-      
-      // Formatear según el tipo de respuesta para mayor belleza visual
-      if (responseText.includes('Title:') && responseText.includes('Lyric:')) {
-        // Formato para Taylor Swift - solo emojis con color, texto en blanco
-        const lines = responseText.split('\n');
-        lines.forEach(line => {
-          if (line.startsWith('Title:')) {
-            console.log(`🎵 ${line}`);
-          } else if (line.startsWith('Lyric:')) {
-            console.log(`📝 ${line}`);
-          }
-        });
-      } else if (mcpName.includes('Kitchen')) {
-        if (responseText.includes('Sustitutos para')) {
-          const lines = responseText.split('\n');
-          lines.forEach((line, index) => {
-            if (index === 0) {
-              console.log(chalk.bold.green(`${line}`));
-            } else if (line.startsWith('•')) {
-              console.log(chalk.cyan(`   ${line}`));
-            }
-          });
-        } else if (responseText.includes('Recetas encontradas:') || responseText.includes('Recetas para tu dieta:')) {
-          const lines = responseText.split('\n');
-          lines.forEach(line => {
-            if (line.includes('Recetas')) {
-              console.log(chalk.bold.green(`${line}`));
-            } else if (line.startsWith('') || line.startsWith('🥗')) {
-              console.log(chalk.bold.white(line));
-            } else if (line.startsWith('   ')) {
-              console.log(chalk.gray(line));
-            }
-          });
-        } else {
-          console.log(`🍳 [${mcpName}]: ${responseText}`);
-        }
-      } else if (mcpName.includes('Git')) {
-        // Formato para Git
-        console.log(`📂 [${mcpName}]: ${responseText}`);
-      } else if (mcpName.includes('Remote')) {
-        // Formato para Remote (Taylor Swift, tiempo, etc.)
-        console.log(`🌐 [${mcpName}]: ${responseText}`);
-      } else {
-        // Formato general
-        console.log(`🤖 [${mcpName}]: ${responseText}`);
-      }
+      logInteraction('assistant', formattedResponse);
       
     } catch (err) {
       let msg;

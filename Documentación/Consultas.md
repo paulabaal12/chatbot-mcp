@@ -1,60 +1,14 @@
 # 🤖 Consultas de Prueba para Chatbot MCP
 
-Este archivo contiene ### 🥗 **Información## 🍳 **Kitchen MCP - Servidor Local**
-*Recetas, nutrición, sustitutos de ingredientes y utensilios de cocina*
-
-### 🥗 **Información Nutricional**
-- How many calories does watermelon have?
-- Give me nutritional information about broccoli.
-
-### 🔄 **Sustitutos de Ingredientes**
-- What food can I use to replace orange juice?
-- What can I use to replace eggs in a recipe?
-
-### 🍽️ **Recetas y Cocina**
-- What kitchen utensils do I need to cook lasagna?
-- Give me recipes with cheese and chicken
-- I want vegan recipes with a maximum of 500 calories.
-- Give me recipes for a keto diet.
-
-### 😊 **Comida por Estado de Ánimo**
-- I feel sad, what can I eat?
-- Recommend me food for when I'm happy.*
-- How many calories does watermelon have?
-- Give me nutritional information about broccoli.
-
-### 🔄 **Sustitutos de Ingredientes**
-- What food can I use to replace orange juice?
-- What can I use to replace eggs in a recipe?
-
-### 🍽️ **Recetas y Cocina**
-- What kitchen utensils do I need to cook lasagna?
-- Give me recipes with cheese and chicken
-- I want vegan recipes with a maximum of 500 calories.
-- Give me recipes for a keto diet.
-
-### 😊 **Comida por Estado de Ánimo**
-- I feel sad, what can I eat?
-- Recommend me food for when I'm happy.
-
----
-
-## 🌐 **RemoteMCP - Cloudflare Workers**
-*Servidor remoto desplegado en la nube con utilidades diversas*
-
-### ⏰ **Utilidades de Tiempo**consultas organizadas por funcionalidad para probar todas las capacidades del chatbot MCP.
-
----
-
 ## 💬 **Mantener Contexto en una Sesión**
 *Prueba la capacidad del chatbot para recordar información previa en la conversación*
 
-### 🧠 Historia y Biografías
+### Historia y Biografías
 - ¿Quién fue Alan Turing?
 - ¿Cuándo nació? 
 - ¿Dónde estudió?
 
-### 🏎️ Deportes y Entretenimiento  
+### Deportes y Entretenimiento  
 - ¿Quién es Charles Leclerc?
 - ¿Cuándo ganó su primera carrera de F1?
 - ¿Para qué equipo corre actualmente?
@@ -107,7 +61,6 @@ Este archivo contiene ### 🥗 **Información## 🍳 **Kitchen MCP - Servidor Lo
 ## 🍳 **Kitchen MCP - Servidor Local**
 *Recetas, nutrición, sustitutos de ingredientes y utensilios de cocina*
 
-### 🥗 **Información Nutricional**
 - What food can I use to replace orange juice?
 - What kitchen utensils do I need to cook lasagna?
 - I feel sad, what can I eat?
@@ -118,11 +71,9 @@ Este archivo contiene ### 🥗 **Información## 🍳 **Kitchen MCP - Servidor Lo
 - What can I use to replace eggs in a recipe?
 - Give me nutritional information about broccoli.
 
-RemoteMCP - Cloudflare Workers (Servidor Remoto)
+## **RemoteMCP - Cloudflare Workers (Servidor Remoto)**
 
 - ¿Qué horas son?
-
-### 🎲 **Entretenimiento**
 - Dame mi número de la suerte
 - Taylor Swift lyric
 
@@ -131,12 +82,12 @@ RemoteMCP - Cloudflare Workers (Servidor Remoto)
 ## **Servidores MCP de Otros Estudiantes**
 *Integración con servidores MCP desarrollados por compañeros*
 
-### ⚽ **TransfermarktMCP** - 
+### **TransfermarktMCP** - 
 - ¿Cuáles son todas las transferencias de Messi?
 - ¿Cuál fue la última transferencia de Kylian Mbappé?
 - Dame un resumen de la carrera de Pedri
 
-### 😴 **SleepCoachMCP** - *Consejos de Sueño y Bienestar*
+### **SleepCoachMCP** - *Consejos de Sueño y Bienestar*
 - Dame consejos para dormir mejor
 - ¿Cómo puedo mejorar mi calidad de sueño si trabajo de noche?
 - ¿Qué debo hacer si me despierto mucho durante la noche?

@@ -33,7 +33,7 @@
 
 3️⃣ **Crear Archivo Principal**
    ```
-   crea un archivo README.md en D:/Documentos/GitHub/test-demo con contenido "# PROYECTO MCP "
+   crea un archivo README.md en D:/Documentos/GitHub/test-demo con contenido "# *PROYECTO MCP* "
    ```
 
 4️⃣ **Crear Archivo Adicional**

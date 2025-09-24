@@ -17,8 +17,8 @@ try {
   console.warn("[WARN] No se pudo cargar all_tools.json:", e);
 }
 
-// Función para formatear respuestas JSON de manera más legible
-function formatMCPResponse(result, mcpName, toolName) {
+// Función para formatear respuestas JSON de manera más legible y conversacional usando Claude
+async function formatMCPResponse(result, mcpName, toolName, originalQuery, claudeClient) {
   if (!result || result === null || result === undefined) {
     return "❌ No se encontró información";
   }
@@ -40,50 +40,83 @@ function formatMCPResponse(result, mcpName, toolName) {
     }
   }
   
-  // Función recursiva para formatear cualquier estructura JSON de manera limpia
-  function formatValue(value, indent = '') {
-    if (value === null || value === undefined) {
-      return 'Sin información';
-    }
+  // Usar Claude para generar una respuesta conversacional automática
+  try {
+    const contentStr = typeof actualContent === 'string' ? actualContent : JSON.stringify(actualContent, null, 2);
     
-    if (typeof value === 'string') {
-      return value;
-    }
+    const prompt = `Convierte esta respuesta técnica en una respuesta conversacional y amigable:
+
+CONSULTA ORIGINAL: "${originalQuery}"
+HERRAMIENTA USADA: ${toolName}
+RESULTADO TÉCNICO: ${contentStr}
+
+INSTRUCCIONES:
+- Responde como si fueras un asistente amigable
+- Usa frases como "Aquí tienes", "Te comparto", "Perfecto", etc.
+- Mantén la información importante pero hazla más natural
+- Si es una letra de canción, preséntala de manera atractiva
+- Si es información nutricional, hazla fácil de entender
+- Si es una operación exitosa, celebra el éxito
+- Máximo 3-4 líneas de respuesta
+- NO uses markdown excesivo, solo lo necesario
+
+Responde SOLO con la versión conversacional:`;
+
+    const response = await claudeClient.createMessage({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 200,
+      messages: [{ role: 'user', content: prompt }]
+    });
     
-    if (typeof value === 'number' || typeof value === 'boolean') {
-      return String(value);
-    }
+    return response.content[0]?.text?.trim() || formatValueFallback(actualContent);
     
-    if (Array.isArray(value)) {
-      if (value.length === 0) return 'Lista vacía';
-      return value.map((item, index) => 
-        `${indent}• ${formatValue(item, indent + '  ')}`
-      ).join('\n');
-    }
-    
-    if (typeof value === 'object') {
-      const entries = Object.entries(value).filter(([key, val]) => 
-        val !== null && val !== undefined && val !== ''
-      );
-      
-      if (entries.length === 0) return 'Sin datos';
-      
-      return entries.map(([key, val]) => {
-        const cleanKey = key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').toLowerCase();
-        const formattedValue = formatValue(val, indent + '  ');
-        
-        if (typeof val === 'object' && !Array.isArray(val)) {
-          return `${indent}${cleanKey}:\n${formattedValue}`;
-        } else {
-          return `${indent}${cleanKey}: ${formattedValue}`;
-        }
-      }).join('\n');
-    }
-    
+  } catch (error) {
+    // Si Claude falla, usar formato básico como respaldo
+    return formatValueFallback(actualContent);
+  }
+}
+
+// Función de respaldo para formatear cuando Claude no esté disponible
+function formatValueFallback(value, indent = '') {
+  if (value === null || value === undefined) {
+    return 'Sin información';
+  }
+  
+  if (typeof value === 'string') {
+    return value;
+  }
+  
+  if (typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
   }
   
-  return formatValue(actualContent);
+  if (Array.isArray(value)) {
+    if (value.length === 0) return 'Lista vacía';
+    return value.map((item, index) => 
+      `${indent}• ${formatValueFallback(item, indent + '  ')}`
+    ).join('\n');
+  }
+  
+  if (typeof value === 'object') {
+    const entries = Object.entries(value).filter(([key, val]) => 
+      val !== null && val !== undefined && val !== ''
+    );
+    
+    if (entries.length === 0) return 'Sin datos';
+    
+    return entries.map(([key, val]) => {
+      const cleanKey = key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').toLowerCase();
+      const formattedValue = formatValueFallback(val, indent + '  ');
+      
+      if (typeof val === 'object' && !Array.isArray(val)) {
+        return `${indent}${cleanKey}:\n${formattedValue}`;
+      } else {
+        return `${indent}${cleanKey}: ${formattedValue}`;
+      }
+    }).join('\n');
+  }
+  
+  return String(value);
 }
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -256,7 +289,7 @@ async function main() {
       logInteraction('assistant', `[${mcpName}]:\n${JSON.stringify(result, null, 2)}`);
       
       // Formatear respuesta de manera legible
-      const formattedResponse = formatMCPResponse(result, mcpName, toolName);
+      const formattedResponse = await formatMCPResponse(result, mcpName, toolName, userInput, claude);
       
       let emoji = '🤖';
       if (mcpName.toLowerCase().includes('kitchen')) emoji = '🥗';

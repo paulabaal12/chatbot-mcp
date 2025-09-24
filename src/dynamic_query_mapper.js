@@ -31,10 +31,19 @@ export async function findToolForQuery(query, claudeClient, conversationHistory 
         loadAllTools();
     }
     
-    // Filtro temprano: detectar preguntas sobre personas ya que a veces se bugguea
-    const personalQuestions = /^(quien es|quién es|who is|cuando nació|cuándo nació|when was.*born|donde nació|dónde nació|where was.*born|cuando murió|cuándo murió|when did.*die)/i;
-    if (personalQuestions.test(query.trim())) {
-        return null; // No usar herramientas para preguntas sobre personas
+    // Filtro para detectar preguntas generales y conceptuales
+    const generalQuestions = /^(quien es|quién es|who is|cuando nació|cuándo nació|when was.*born|donde nació|dónde nació|where was.*born|cuando murió|cuándo murió|when did.*die|que es|qué es|what is|explica|explain|explicame|explícame|define|definition|definición)/i;
+    if (generalQuestions.test(query.trim())) {
+        return null; // No usar herramientas para preguntas generales
+    }
+    
+    // Filtro adicional para conceptos técnicos y generales
+    const conceptualKeywords = ['protocolo', 'formula 1', 'fórmula 1', 'inteligencia artificial', 'http', 'https', 'tcp', 'ip', 'dns', 'historia', 'geografia', 'geografía', 'ciencia', 'física', 'química', 'matemáticas', 'literatura', 'arte', 'música', 'deporte', 'deportes', 'filosofía', 'psicología', 'biología'];
+    const hasConceptualKeywords = conceptualKeywords.some(keyword => 
+        query.toLowerCase().includes(keyword.toLowerCase())
+    );
+    if (hasConceptualKeywords && (query.toLowerCase().includes('que es') || query.toLowerCase().includes('qué es') || query.toLowerCase().includes('what is') || query.toLowerCase().includes('explica') || query.toLowerCase().includes('explícame'))) {
+        return null; // No usar herramientas para explicaciones conceptuales
     }
     
     // Crear un resumen compacto de herramientas para Claude
@@ -63,6 +72,9 @@ export async function findToolForQuery(query, claudeClient, conversationHistory 
             ❌ Biografías e información general de personas
             ❌ Preguntas de seguimiento biográficas
             ❌ Fechas históricas (solo usar get_time para hora actual del sistema)
+            ❌ Explicaciones conceptuales: "que es HTTP", "explica la formula 1", "que es inteligencia artificial"
+            ❌ Definiciones técnicas: "que es el protocolo HTTP", "explica TCP/IP"
+            ❌ Conocimiento general: historia, ciencia, literatura, arte, deportes, etc.
 
             USAR HERRAMIENTAS SOLO PARA:
             ✅ Crear/leer archivos específicos
@@ -89,11 +101,14 @@ export async function findToolForQuery(query, claudeClient, conversationHistory 
             IMPORTANTE: 
             - Para PREGUNTAS GENERALES → NO usar herramientas (retornar null):
             * "¿Quién es X?", "¿Quién fue X?", "quien es X", "quien fue X"
-            * "¿Qué es Y?", "que es Y", "explica Y"
+            * "¿Qué es Y?", "que es Y", "explica Y", "explícame Y"
             * "¿Cuándo nació X?", "cuando nació X", "when was X born"
             * "¿Dónde nació X?", "donde nació X"
             * "¿Cuándo murió X?", "cuando murió X"
             * Biografías, fechas históricas, información general de personas
+            * Explicaciones de conceptos: "que es HTTP", "explica formula 1", "que es inteligencia artificial"
+            * Definiciones técnicas: "protocolo HTTP", "TCP/IP", "DNS", etc.
+            * Conocimiento general: historia, ciencia, literatura, arte, deportes
             - Para PREGUNTAS DE SEGUIMIENTO sobre personas → NO usar herramientas (retornar null):
             * "¿En qué fecha nació?", "¿Dónde nació?", "¿Cuándo murió?"
             * "cuando nació", "where was he born", "when did he die"

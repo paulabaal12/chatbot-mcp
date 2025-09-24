@@ -146,53 +146,24 @@ You'll see the startup information:
 ```
 > Necesito un sustituto de arroz
 🔧 [Chatbot]: Ejecutando tool suggest_ingredient_substitution en KitchenMCP...
-🥗 [KitchenMCP]: ingredient: rice, brown, long-grain
-  substitutions:   
-  • Barley, pearled, cooked
-  • Oil, rice bran
-  • Quinoa, uncooked
-  • Wild rice, raw
+🥗 [KitchenMCP]: ¡Perfecto! Entiendo que estás buscando un sustituto para el arroz. Aquí te comparto algunas opciones interesantes que podrían funcionar: puedes probar el cebada perlada cocida, el aceite de salvado de arroz, la quinoa cruda o el arroz silvestre sin cocinar. Cualquiera de estas alternativas sería una excelente opción para reemplazar el arroz en tus recetas. ¿Qué te parece? ¡Espero que encuentres la que mejor se ajuste a tus necesidades!
 
 > Que utensilios de cocina necesito para cocinar lasaña
 🔧 [Chatbot]: Ejecutando tool suggest_utensils_for_recipe en KitchenMCP...
-🥗 [KitchenMCP]: recipe: lasaña
-  utensils:   
-  • knife
-  • cutting board
-  • spoon
-  • fork
-  • bowl
-  • pot
-  • pan
-  • colander
-  • measuring cups
-  • measuring spoons
-  • mixing bowls
-  • whisk
-  • spatula
-  • tongs
-  • oven mitts
-  • peeler
-  • grater
-  • ladle
-  • can opener
-  • tray
-  • storage container
+🥗 [KitchenMCP]: ¡Claro, con gusto te comparto los utensilios que necesitarás para preparar una deliciosa lasaña! Aquí tienes una lista de lo básico: una tabla de cortar, un cuchillo, un cucharón, un tenedor, algunos recipientes, una olla, una sartén, un colador, tazas y cucharas para medir, bowls para mezclar, una batidora, una espátula, unas pinzas, guantes de horno, un pelador y una ralladora. ¡Todo lo que necesitas para cocinar una lasaña casera y llena de sabor! Avísame si necesitas algo más.
 ```
 
 #### Remote Server (Taylor Swift Lyrics & Time)
 ```
 > taylor swift lyric
 🔧 [Chatbot]: Ejecutando tool taylor_lyric en RemoteMCP...
-🌐 [RemoteMCP]: 
-title: Would've, Could've, Should've
-lyric: Memories feel like weapons
+🌐 [RemoteMCP]: ¡Perfecto, aquí tienes la letra de la canción "Getaway Car" de Taylor Swift!
+
+"Cause us traitors never win" es una de las frases clave de esta canción. Te comparto este fragmento de la letra para que puedas disfrutar de la melodía y las letras de Taylor. ¡Espero que lo disfrutes!
 
 > que horas son
 🔧 [Chatbot]: Ejecutando tool get_time en RemoteMCP...
-🔧 [Chatbot]: Ejecutando tool get_time en RemoteMCP...
-🌐 [RemoteMCP]: timezone: UTC
-time: 2025-09-23T23:07:46.100Z
+🌐 [RemoteMCP]: ¡Aquí tienes! Son las 2:43 a.m. hora UTC. Te comparto que la hora actual es las 2:43 de la madrugada. Perfecto, espero que esta información sea útil para ti.
 ```
 
 #### View Session Logs

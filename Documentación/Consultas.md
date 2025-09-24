@@ -62,6 +62,7 @@
 *Recetas, nutrición, sustitutos de ingredientes y utensilios de cocina*
 
 - What food can I use to replace orange juice?
+- Give me nutritional information about Strawberry
 - What kitchen utensils do I need to cook lasagna?
 - I feel sad, what can I eat?
 - Give me recipes with cheese and chicken

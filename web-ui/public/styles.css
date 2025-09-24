@@ -1,22 +1,91 @@
+/* Estilos para respuestas de información nutricional */
+.nutrition-container {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-radius: 12px;
+  padding: 1.2rem;
+  margin: 0.8rem 0;
+  border-left: 4px solid #22c55e;
+  box-shadow: var(--shadow-md);
+}
+
+.nutrition-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #166534;
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nutrition-content {
+  font-size: 1rem;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.nutrition-content div {
+  margin-bottom: 0.4rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.nutrition-content div:last-child {
+  border-bottom: none;
+}
+
+/* Estilos para respuestas generales */
+.general-response {
+  font-size: 1rem;
+  color: var(--text-dark);
+  line-height: 1.6;
+  padding: 0.8rem 1rem;
+  background: var(--cool-gray-50);
+  border-radius: 8px;
+  margin: 0.5rem 0;
+  border-left: 3px solid var(--primary-blue);
+}
+
+.general-response strong {
+  color: var(--primary-blue-dark);
+  font-weight: 600;
+}
+
 /* Estilos para respuestas de letras de canciones */
+.lyric-container {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 12px;
+  padding: 1.2rem;
+  margin: 0.8rem 0;
+  border-left: 4px solid var(--primary-blue);
+  box-shadow: var(--shadow-md);
+}
+
 .lyric-title {
   font-size: 1.15rem;
   font-weight: 600;
   color: var(--primary-blue-dark);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.8rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
+
+.lyric-content {
+  font-size: 1.05rem;
+  color: var(--text-dark);
+  line-height: 1.6;
+}
+
+.lyric-content strong {
+  color: var(--primary-blue-dark);
+  font-weight: 600;
+}
+
 .lyric-title strong {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-.lyric-title::before {
-  content: "\1F3B5 "; /* 🎵 */
-  font-size: 1.2em;
-  margin-right: 0.3em;
 }
 .lyric-text {
   font-size: 1.05rem;

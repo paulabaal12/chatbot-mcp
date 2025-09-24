@@ -4021,7 +4021,7 @@
   },
   {
     "name": "get_time",
-    "description": "Get current time in UTC or specified timezone",
+    "description": "Returns the current time in UTC or a specified timezone.",
     "input_schema": {},
     "output_schema": {},
     "annotations": {},
@@ -4029,7 +4029,15 @@
   },
   {
     "name": "lucky_number",
-    "description": "Get a random lucky number between 1 and 100",
+    "description": "Returns a random lucky number between 1 and 100.",
+    "input_schema": {},
+    "output_schema": {},
+    "annotations": {},
+    "mcp": "RemoteMCP"
+  },
+  {
+    "name": "fun_fact",
+    "description": "Returns a random fun fact.",
     "input_schema": {},
     "output_schema": {},
     "annotations": {},
@@ -4037,7 +4045,7 @@
   },
   {
     "name": "taylor_lyric",
-    "description": "Get a random Taylor Swift lyric and song title",
+    "description": "Returns a random lyric and song title from Taylor Swift's discography.",
     "input_schema": {},
     "output_schema": {},
     "annotations": {},

@@ -117,6 +117,11 @@ async function processWebMessage(input, conversationHistory = []) {
         logInteraction('user', userInput);
         logInteraction('assistant', response.content[0]?.text || "(sin respuesta)");
         
+        // Imprimir el JSON original para TODOS los MCPs
+        if (result && typeof result === 'object') {
+          console.log(`[MCP-DIRECT]: ${JSON.stringify(result)}`);
+        }
+        
         console.log(`[Claude + ${mcpName}]: ${response.content[0]?.text || "(sin respuesta)"}`);
         
       } catch (err) {

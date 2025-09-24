@@ -103,12 +103,93 @@ async function processChatbotMessage(message, socket) {
       for (const line of lines) {
         const trimmedLine = line.trim();
         
+        // Debug: mostrar solo líneas realmente importantes (sin emojis ni ruido)
+        if (trimmedLine.length > 0) {
+          // Solo mostrar líneas MCP-DIRECT y errores críticos
+          if (trimmedLine.startsWith('[MCP-DIRECT]:') || 
+              trimmedLine.includes('Failed to parse') ||
+              trimmedLine.includes('ERROR') ||
+              trimmedLine.includes('Error')) {
+            console.log('[DEBUG] Línea recibida:', trimmedLine);
+          }
+        }
+        
+        // Detectar respuesta MCP directa (prioridad)
+        if (trimmedLine.startsWith('[MCP-DIRECT]:')) {
+          const jsonMatch = trimmedLine.match(/\[MCP-DIRECT\]:\s*(.+)/);
+          if (jsonMatch) {
+            try {
+              const outerJson = JSON.parse(jsonMatch[1]);
+              let actualJson = null;
+              
+              // Si es una respuesta de Claude con content anidado
+              if (outerJson.content && outerJson.content[0] && outerJson.content[0].text) {
+                const innerText = outerJson.content[0].text
+                  .replace(/\\n/g, '\n')
+                  .replace(/\\"/g, '"')
+                  .replace(/\\\\/g, '\\')
+                  .trim();
+                
+                try {
+                  actualJson = JSON.parse(innerText);
+                } catch (e) {
+                  console.log('[DEBUG] Failed to parse inner JSON:', e.message);
+                  actualJson = outerJson; // Usar el JSON externo como fallback
+                }
+              } else {
+                actualJson = outerJson;
+              }
+              
+              if (actualJson) {
+                let formattedResponse = '';
+                
+                // Para letras de Taylor Swift
+                if (actualJson.title && actualJson.lyric) {
+                  formattedResponse = `<div class="lyric-container">
+                    <div class="lyric-title"><strong>${actualJson.title}</strong></div>
+                    <div class="lyric-text">"${actualJson.lyric}"</div>
+                  </div>`;
+                }
+                // Para cualquier otro tipo
+                else {
+                  const keys = Object.keys(actualJson);
+                  let content = keys.map(key => {
+                    const value = actualJson[key];
+                    if (Array.isArray(value)) {
+                      return `<strong>${key}:</strong><br>${value.map(v => `• ${v}`).join('<br>')}`;
+                    } else if (typeof value === 'object' && value !== null) {
+                      return `<strong>${key}:</strong><br>${JSON.stringify(value, null, 2)}`;
+                    }
+                    return `<strong>${key}:</strong> ${value}`;
+                  }).join('<br><br>');
+                  formattedResponse = `<div class="general-response">${content}</div>`;
+                }
+                
+                if (formattedResponse) {
+                  socket.emit('message', {
+                    type: 'assistant',
+                    content: formattedResponse,
+                    timestamp: new Date().toISOString()
+                  });
+                  isProcessing = true;
+                }
+              }
+            } catch (e) {
+              console.log('[DEBUG] Failed to parse MCP-DIRECT:', e.message);
+            }
+          }
+        }
         // Detectar respuestas de Claude + MCP
         if (trimmedLine.startsWith('[Claude + ')) {
           const mcpMatch = trimmedLine.match(/\[Claude \+ ([^\]]+)\]:\s*(.+)/);
           if (mcpMatch) {
             const mcpName = mcpMatch[1];
-            const response = mcpMatch[2];
+            const response = mcpMatch[2].trim();
+            
+            // Filtrar respuestas incompletas o fragmentos JSON
+            if (response === '{' || response === '}' || response.length < 5) {
+              return; // Ignorar fragmentos
+            }
             
             // Formatear según el tipo de MCP
             let formattedResponse = '';

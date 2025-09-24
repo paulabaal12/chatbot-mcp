@@ -73,14 +73,38 @@ export class ClaudeClient {
       };
     }
     
-    // Para resultados simples, usar un prompt mínimo
-    const prompt = `Presenta estos datos de forma clara y útil para el usuario:
+    // Para resultados simples o estructurados, formatear de manera amigable
+    if (result && typeof result === 'object') {
+      // Si es un objeto simple con propiedades reconocibles
+      if (Object.keys(result).length <= 5) {
+        let formattedText = '';
+        for (const [key, value] of Object.entries(result)) {
+          if (value && typeof value === 'string') {
+            formattedText += `**${key.charAt(0).toUpperCase() + key.slice(1)}:** ${value}\n\n`;
+          }
+        }
+        if (formattedText) {
+          return {
+            content: [{ text: formattedText.trim() }]
+          };
+        }
+      }
+    }
+    
+    // Para resultados que ya son texto
+    if (typeof result === 'string') {
+      return {
+        content: [{ text: result }]
+      };
+    }
+    
+    // Usar Claude solo como último recurso para casos complejos
+    const prompt = `Presenta estos datos de forma clara y útil para el usuario,Puedes decirle algo como Hola, y responder o algo :
 
 Consulta: ${userQuery}
-Herramienta: ${toolName}
 Resultado: ${JSON.stringify(result, null, 2)}
 
-Responde de forma directa sin explicaciones innecesarias.`;
+Responde de forma directa y amigable.`;
 
     return this.sendMessage(prompt, [], 800);
   }
